@@ -69,6 +69,13 @@ kubectl get gateway -A
 
 ## Test
 
+### Local Domain
+
+`C:\Windows\System32\drivers\etc\hosts` add: 
+```
+127.0.0.1 demo.example.com
+```
+
 ### Local HTTPS
 
 #### install tool
