@@ -85,10 +85,8 @@ mkcert -install
 
 #### check root ca
 
-
 ```bash
 mkcert -CAROOT
-
 ```
 
 #### create certificate
@@ -110,7 +108,11 @@ kubectl create secret tls local-cert-tls \
 
 ### Run
 
-check server `curl --ssl-revoke-best-effort https://localhost/app/healthz`
-test queue work `curl --ssl-revoke-best-effort https://localhost/app/work`
-test entity check `curl --ssl-revoke-best-effort https://localhost/app/items`
-test entity write `curl -X POST --ssl-revoke-best-effort https://localhost/app/items`
+check server 
+`curl --ssl-revoke-best-effort https://localhost/app/healthz`
+test queue work 
+`curl --ssl-revoke-best-effort https://localhost/app/work`
+test entity check 
+`curl --ssl-revoke-best-effort https://localhost/app/items`
+test entity write
+ `curl -X POST --ssl-revoke-best-effort https://localhost/app/items`
