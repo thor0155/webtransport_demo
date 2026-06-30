@@ -1,0 +1,19 @@
+resources:
+  - ../../base
+  - ../../../mysql
+
+patches:
+  - path: patch-image.yaml
+    target:
+      kind: Deployment
+      name: demo-app
+  - target:
+      kind: Gateway
+      name: my-gateway
+    patch: |
+      - op: add
+        path: /spec/listeners/1/tls
+        value:
+          mode: Terminate
+          certificateRefs:
+            - name: local-cert-tls

@@ -1,0 +1,10 @@
+providers:
+  kubernetesGateway:
+    enabled: true
+
+gatewayClass:
+  enabled: true
+  name: traefik
+
+gateway:
+  enabled: false
