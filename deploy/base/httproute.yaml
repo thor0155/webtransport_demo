@@ -5,7 +5,7 @@ metadata:
 spec:
   parentRefs:
     - name: my-gateway
-      namespace: traefik
+      # namespace: default
   hostnames:
   - demo.example.com
   - localhost

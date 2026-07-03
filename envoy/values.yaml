@@ -1,0 +1,15 @@
+deployment:
+  replicas: 1 #local dev only
+
+provider:
+  type: Kubernetes
+
+logging:
+  level:
+    default: debug
+
+service:
+  type: LoadBalancer
+
+crds:
+  enabled: false

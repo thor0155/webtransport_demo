@@ -1,6 +1,7 @@
 resources:
   - ../../base
   - ../../../mysql
+  - gatewayclass.yaml
 
 patches:
   - path: patch-image.yaml
@@ -18,8 +19,5 @@ patches:
           certificateRefs:
             - name: local-cert-tls
       - op: replace
-        path: /spec/listeners/0/port
-        value: 8000
-      - op: replace
-        path: /spec/listeners/1/port
-        value: 8443
+        path: /spec/gatewayClassName
+        value: envoy
