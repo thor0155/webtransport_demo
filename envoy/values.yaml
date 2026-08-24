@@ -1,5 +1,5 @@
 deployment:
-  replicas: 1 #local dev only
+  replicas: 2 #local dev only 1
 
 provider:
   type: Kubernetes
@@ -11,5 +11,11 @@ logging:
 service:
   type: LoadBalancer
 
-crds:
-  enabled: false
+config:
+  envoyGateway:
+    extensionApis:
+      enableEnvoyPatchPolicy: true
+    logging:
+      level:
+        default: debug
+    

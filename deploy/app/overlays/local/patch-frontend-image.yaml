@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: demo-app
+  name: frontend
 spec:
   template:
     spec:
       containers:
-        - name: app
-          image: demo-app:local
+        - name: web
+          image: demo-frontend:latest
           imagePullPolicy: Always
           # imagePullPolicy: IfNotPresent

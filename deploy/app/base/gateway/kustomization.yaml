@@ -1,0 +1,6 @@
+resources:
+  - gateway-class.yaml
+  - gateway.yaml
+  - enable-http3.yaml
+  - http-route.yaml
+  - udp-route.yaml

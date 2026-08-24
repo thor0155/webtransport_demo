@@ -1,0 +1,5 @@
+crds:
+  gatewayAPI:
+    enabled: false    # 如果 Gateway API CRD 已由別的來源管理,這裡設 false 避免衝突
+  envoyGateway:
+    enabled: true

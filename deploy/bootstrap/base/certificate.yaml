@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: my-cert-keygen
+spec:
+  secretName: tls-cert-secret     # 跟你 Gateway/Pod 已經在用的名字一致,直接取代 mkcert 那份
+  issuerRef:
+    name: letsencrypt-dns
+    kind: ClusterIssuer
+  dnsNames:
+    - "wt.thorlinlab.cc"
+    - "api.thorlinlab.cc"
+    - "app.thorlinlab.cc"

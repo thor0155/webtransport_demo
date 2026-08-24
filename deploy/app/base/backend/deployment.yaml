@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: chat-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: backend
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: chat-demo
+    spec:
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: tls-cert
+        secret:
+          secretName: tls-cert-secret
+      containers:
+        - name: api
+          image: demo-backend:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            # - secretRef:
+            #     name: master
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MYSQL_DSN
+              value: "root:password@tcp(mysql:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local"
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: webtransport
+              containerPort: 8443
+              protocol: UDP
+          volumeMounts:
+          - name: tls-cert
+            mountPath: /certs
+            readOnly: true
+          readinessProbe: #主要重點設定
+            httpGet:
+              path: /readyz       # 健康檢查路徑
+              port: http           # 健康檢查端口
+            initialDelaySeconds: 5 # 啟動後延遲 5 秒再檢查
+            periodSeconds: 10      # 每 10 秒檢查一次
+            timeoutSeconds: 2      # 每次檢查最多等待 2 秒
+            failureThreshold: 3    # 連續失敗 3 次 → Pod 標記為 Not Ready
+          livenessProbe: #Process 活著
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            timeoutSeconds: 2
+          # startupProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: http
+          #   periodSeconds: 5
+          #   failureThreshold: 20
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - sh
+                - -c
+                - sleep 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+
+          # securityContext:
+          #   runAsNonRoot: true
+          #   runAsUser: 10001
+          #   runAsGroup: 10001
+          #   allowPrivilegeEscalation: false
+          #   readOnlyRootFilesystem: true

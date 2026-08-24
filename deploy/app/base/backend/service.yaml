@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: backend
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: chat-demo
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app.kubernetes.io/name: backend
+
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+
+    - name: webtransport
+      port: 8443
+      targetPort: webtransport
+      protocol: UDP
