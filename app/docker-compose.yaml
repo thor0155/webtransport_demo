@@ -18,9 +18,6 @@ services:
     ports:
       - "8080:8080"
       - "8443:8443/udp"
-    # volumes:
-    #   - ../localhost+4.pem:/certs/tls.crt:ro
-    #   - ../localhost+4-key.pem:/certs/tls.key:ro
     environment:
       - WEBTRANSPORT_USE_SELF_CERT=true
       - GIN_MODE=test
