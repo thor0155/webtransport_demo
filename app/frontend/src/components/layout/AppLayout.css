@@ -1,0 +1,19 @@
+.app-layout {
+    height: 100%;
+
+    display: flex;
+
+    overflow: hidden;
+}
+
+.main-content {
+    flex: 1;
+
+    min-width: 0;
+
+    min-height: 0;
+
+    overflow: hidden;
+
+    padding: var(--space-4);
+}

@@ -1,0 +1,68 @@
+.event-card {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-left: 3px solid transparent;
+    border-radius: var(--radius-sm);
+}
+
+.event-card.connect {
+    border-left-color: var(--success);
+}
+
+.event-card.reconnect {
+    border-left-color: var(--primary);
+}
+
+.event-card.disconnect {
+    border-left-color: var(--border);
+}
+
+.event-card.join {
+    border-left-color: var(--success);
+}
+
+.event-card.leave {
+    border-left-color: var(--text-secondary);
+}
+
+.event-card.warn {
+    border-left-color: var(--warning);
+}
+
+.event-card.error {
+    border-left-color: var(--danger);
+}
+
+.event-card.info {
+    border-left-color: var(--primary);
+}
+
+.event-card:hover {
+    background: var(--surface-hover);
+}
+
+.event-message {
+    font-size: var(--font-sm);
+    font-weight: 500;
+}
+
+.event-time {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: var(--font-xs);
+}
+
+.event-icon {
+    width: 20px;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.event-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}

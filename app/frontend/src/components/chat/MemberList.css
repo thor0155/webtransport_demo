@@ -1,0 +1,19 @@
+.member-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: var(--space-2);
+
+    height: 100%;
+
+    overflow-y: auto;
+}
+
+.member-empty {
+    padding: var(--space-4);
+
+    text-align: center;
+
+    color: var(--text-secondary);
+}

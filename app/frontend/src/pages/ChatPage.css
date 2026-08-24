@@ -1,0 +1,91 @@
+.chat-page {
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: var(--space-4);
+
+    min-height: 0;
+}
+
+.chat-body {
+    flex: 1;
+
+    min-height: 0;
+
+    display: grid;
+
+    grid-template-columns: minmax(0, 1fr) 320px;
+
+    gap: var(--space-4);
+}
+
+.chat-main {
+    display: flex;
+
+    flex-direction: column;
+
+    min-height: 0;
+}
+
+.message-card {
+    flex: 1;
+
+    min-height: 0;
+}
+
+.message-card .card-content {
+    display: flex;
+
+    flex-direction: column;
+
+    min-height: 0;
+
+    padding: 0;
+}
+
+.chat-sidebar {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: var(--space-4);
+
+    min-height: 0;
+}
+
+/* Connection */
+
+.chat-sidebar > .card:first-child {
+    max-height: 360px;
+
+    overflow: hidden;
+}
+
+.chat-sidebar > .card:first-child .card-content {
+    overflow-y: auto;
+}
+
+/* Members */
+
+.chat-sidebar > .card:nth-child(2) {
+    flex: 1;
+
+    min-height: 0;
+}
+
+.chat-sidebar > .card:nth-child(2) .card-content {
+    overflow-y: auto;
+}
+
+/* Events */
+
+.chat-sidebar > .card:last-child {
+    height: 220px;
+}
+
+.chat-sidebar > .card:last-child .card-content {
+    overflow-y: auto;
+}

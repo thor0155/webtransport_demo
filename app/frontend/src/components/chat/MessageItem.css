@@ -1,0 +1,59 @@
+.message-item {
+    display: flex;
+
+    justify-content: flex-start;
+
+    margin-bottom: var(--space-3);
+}
+
+.message-item.mine {
+    justify-content: flex-end;
+}
+
+.message-bubble {
+    max-width: 70%;
+
+    padding: var(--space-3);
+
+    background: var(--surface-secondary);
+
+    border-radius: var(--radius-md);
+
+    border: 1px solid var(--border);
+}
+
+.message-item.mine .message-bubble {
+    background: var(--mine-bg);
+
+    border-color: transparent;
+}
+
+.message-header {
+    display: flex;
+
+    align-items: center;
+
+    gap: var(--space-3);
+
+    margin-bottom: var(--space-2);
+}
+
+.message-sender {
+    font-weight: 600;
+
+    font-size: var(--font-md);
+}
+
+.message-header time {
+    font-size: var(--font-sm);
+
+    color: var(--text-secondary);
+}
+
+.message-text {
+    white-space: pre-wrap;
+
+    word-break: break-word;
+
+    line-height: 1.5;
+}

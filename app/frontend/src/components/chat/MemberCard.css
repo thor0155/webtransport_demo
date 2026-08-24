@@ -1,0 +1,99 @@
+.member-card {
+    display: flex;
+
+    align-items: center;
+
+    gap: var(--space-3);
+
+    padding: 10px 12px;
+
+    border-radius: var(--radius-md);
+
+    transition: background 0.15s;
+}
+
+.member-card:hover {
+    background: var(--hover);
+}
+
+.member-card.self {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.member-avatar {
+    width: 36px;
+
+    height: 36px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    font-weight: 600;
+
+    color: white;
+
+    background: var(--primary);
+}
+
+.member-detail {
+    flex: 1;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: var(--space-2);
+
+    min-width: 0;
+}
+
+.member-name {
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-weight: 500;
+}
+
+.member-self {
+    padding: 2px 8px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    color: var(--primary);
+
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.online-dot {
+    width: 10px;
+
+    height: 10px;
+
+    border-radius: 50%;
+
+    flex-shrink: 0;
+}
+
+.online-dot.online {
+    background: var(--success);
+
+    box-shadow: 0 0 6px color-mix(in srgb, var(--success) 60%, transparent);
+}
+
+.online-dot.offline {
+    background: var(--offline);
+}
