@@ -7,19 +7,18 @@ import (
 	"api/internal/model"
 	"api/internal/model/entity"
 	"api/internal/server/wts"
-	"api/internal/utils"
 	"context"
 	"runtime"
 	"time"
 
 	"github.com/cockroachdb/errors"
-	"github.com/google/uuid"
 	"github.com/panjf2000/ants/v2"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type ChatService interface {
 	GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.Member, error)
-	WriteMessage(ctx context.Context, roomName string, userId string, message string) error
+	WriteMessage(ctx context.Context, roomName string, userId string, message string) (bson.ObjectID, time.Time, error)
 }
 
 type chatService struct {
@@ -51,10 +50,14 @@ func (c *chatService) GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.M
 	return members, nil
 }
 
-func (c *chatService) WriteMessage(ctx context.Context, roomName string, userId string, message string) error {
+func (c *chatService) WriteMessage(ctx context.Context, roomName string, userId string, message string) (bson.ObjectID, time.Time, error) {
 
 	work := newAsyncWork("write_chat_message")
-	c.workTracker.Track(work)
+	if err := c.workTracker.Track(work); err != nil {
+		return bson.ObjectID{}, time.Time{}, err
+	}
+	resultId := bson.NewObjectID()
+	createdAt := time.Now()
 
 	if err := c.writeChatMessageCoroutine.Submit(func() {
 		defer close(work.done)
@@ -63,12 +66,12 @@ func (c *chatService) WriteMessage(ctx context.Context, roomName string, userId 
 		if err != nil {
 			return
 		}
-		c.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(room.ID, userId, message))
+		c.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(resultId, room.ID, userId, message, createdAt))
 	}); err != nil {
-		return errors.WithStack(err)
+		return bson.ObjectID{}, time.Time{}, errors.WithStack(err)
 	}
 
-	return nil
+	return resultId, createdAt, nil
 }
 
 func NewChatService(chatRoomDao chatd.ChatRoomDao, chatMessageDao chatd.ChatMessageDao, workTracker obj.WorkTracker) (ChatService, error) {
@@ -94,22 +97,4 @@ func (c *chatService) setMemberModelBySession(member *model.Member, session *wts
 func (c *chatService) setMemberModelByUserEntity(member *model.Member, user *entity.User) {
 	member.Id = user.ID
 	member.Name = user.Name
-}
-
-func EncodeChatPayload(u *model.User, text string) ([]byte, error) {
-
-	result := model.ChatPayload{
-		Id:         uuid.NewString(),
-		SenderId:   u.Id,
-		SenderName: u.Name,
-		Text:       text,
-		Timestamp:  time.Now().Unix(),
-	}
-
-	b, err := utils.Encode(result)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
 }

@@ -1,6 +1,11 @@
 package model
 
-import "go.mongodb.org/mongo-driver/v2/bson"
+import (
+	"api/internal/utils"
+	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
 
 type ChatPayload struct {
 	Id         string `msgpack:"id"`
@@ -18,4 +23,21 @@ type ChatRequestPayload struct {
 type ChatCursor struct {
 	BucketSeq int64
 	MsgId     bson.ObjectID
+}
+
+func EncodeChatPayload(messageId string, user *User, text string, createdAt time.Time) ([]byte, error) {
+
+	result := ChatPayload{
+		Id:         messageId,
+		SenderId:   user.Id,
+		SenderName: user.Name,
+		Text:       text,
+		Timestamp:  createdAt.Unix(),
+	}
+
+	b, err := utils.Encode(result)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }

@@ -22,7 +22,7 @@ func TestAppendMessage(t *testing.T) {
 	t.Run("first message creates a new bucket", func(t *testing.T) {
 		var roomId uint = 1
 
-		require.NoError(t, test.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(roomId, userId, "hello")))
+		require.NoError(t, test.chatMessageDao.AppendMessage(ctx, entity.NewChatMessageSimply(roomId, userId, "hello")))
 
 		var bucket entity.ChatMessageBucket
 		err := test.mongodb.Database().Collection(entity.TableNameChatMessageBucket).
@@ -40,7 +40,7 @@ func TestAppendMessage(t *testing.T) {
 		var roomId uint = 2
 		for i := 0; i < BucketMaxCount; i++ {
 			require.NoError(t,
-				test.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(roomId, fmt.Sprint("foo", i), "msg")))
+				test.chatMessageDao.AppendMessage(ctx, entity.NewChatMessageSimply(roomId, fmt.Sprint("foo", i), "msg")))
 		}
 
 		var bucket entity.ChatMessageBucket
@@ -53,7 +53,7 @@ func TestAppendMessage(t *testing.T) {
 		assert.Equal(t, BucketMaxCount, bucket.Count)
 
 		// 再寫一則應該開新 bucket,而不是塞進滿的那個
-		err := test.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(roomId, "bar", "overflow"))
+		err := test.chatMessageDao.AppendMessage(ctx, entity.NewChatMessageSimply(roomId, "bar", "overflow"))
 		require.NoError(t, err)
 
 		count, _ := messageBucketCollection.
@@ -69,7 +69,7 @@ func TestGetRecentMessages_Pagination(t *testing.T) {
 
 	// 塞 150 則,跨 2 個 bucket
 	for i := 0; i < 150; i++ {
-		err := test.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(
+		err := test.chatMessageDao.AppendMessage(ctx, entity.NewChatMessageSimply(
 			roomId, fmt.Sprintf("user%d", i), fmt.Sprintf("msg-%d", i)))
 		require.NoError(t, err)
 		time.Sleep(time.Millisecond)

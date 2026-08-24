@@ -101,21 +101,21 @@ func (c *chatController) handleChat(ctx wts.Context) error {
 	}
 
 	session := ctx.GetSession()
-	joinedRooms := session.GetRooms()
-	rooms := joinedRooms.ToRooms()
-	room := rooms.First()
+	room := session.GetRoom()
 	dbCtx := db.WithGorm(ctx, c.mysql.Session())
 
-	if err := c.chatService.WriteMessage(dbCtx, room.Name(), ctx.GetSession().User.Id, request.Text); err != nil {
-		return err
-	}
-
-	b, err := chats.EncodeChatPayload(&ctx.GetSession().User, request.Text)
+	messageId, createdAt, err := c.chatService.WriteMessage(dbCtx, room.Name(), ctx.GetSession().User.Id, request.Text)
 	if err != nil {
 		return err
 	}
 
-	wts.BroadcastAllRoom(rooms, wts.ResponseTypeChat, b)
+	b, err := model.EncodeChatPayload(messageId.Hex(), &ctx.GetSession().User, request.Text, createdAt)
+	if err != nil {
+		return err
+	}
+	// c.logger.Debug("broadcast chat", zap.String("messageId", messageId.Hex()), zap.Time("createdAt", createdAt))
+
+	wts.BroadcastAllRoom([]*wts.Room{room}, wts.ResponseTypeChat, b)
 
 	return nil
 }

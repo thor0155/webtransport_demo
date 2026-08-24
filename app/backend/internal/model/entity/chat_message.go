@@ -35,7 +35,15 @@ type ChatMessageBucket struct {
 	Messages   []*ChatMessage `bson:"messages"`
 }
 
-func NewChatMessage(roomId uint, userId string, content string) *ChatMessage {
+func NewChatMessage(messageId bson.ObjectID, roomId uint, userId string, content string, createdAt time.Time) *ChatMessage {
+	return &ChatMessage{
+		Id:        messageId,
+		RoomId:    roomId,
+		UserId:    userId,
+		Content:   content,
+		CreatedAt: createdAt}
+}
+func NewChatMessageSimply(roomId uint, userId string, content string) *ChatMessage {
 	return &ChatMessage{
 		Id:        bson.NewObjectID(),
 		RoomId:    roomId,
