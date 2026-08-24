@@ -1,0 +1,36 @@
+services:
+
+  backend_migrate:
+    image: demo-backend-migrate:${TAG:-latest}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.migrate
+      # args:
+      #   - sdf=sdf
+    environment:
+      - DB_MYSQL_DBNAME=test
+
+  backend_server:
+    image: demo-backend-server:${TAG:-latest}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.server
+    ports:
+      - "8080:8080"
+      - "8443:8443/udp"
+    # volumes:
+    #   - ../localhost+4.pem:/certs/tls.crt:ro
+    #   - ../localhost+4-key.pem:/certs/tls.key:ro
+    environment:
+      - WEBTRANSPORT_USE_SELF_CERT=true
+      - GIN_MODE=test
+      - DB_MYSQL_DBNAME=test
+
+  frontend:
+    image: demo-frontend:${TAG:-latest}
+    build:
+      context: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
