@@ -1,0 +1,7 @@
+components:
+  db:
+    mysql:
+      dbname: ${DB_MYSQL_DBNAME:test} 
+
+log:
+  level: ${LOG_LEVEL:debug}

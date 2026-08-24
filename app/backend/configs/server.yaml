@@ -1,0 +1,60 @@
+components:
+  db:
+    mysql:
+      active: ${DB_MYSQL_ACTIVE:true} 
+      host: ${DB_MYSQL_HOST:} 
+      port: ${DB_MYSQL_PORT:3306}  
+      user: ${DB_MYSQL_USER:root}
+      password: ${DB_MYSQL_PASSWORD:} 
+      dbname: ${DB_MYSQL_DBNAME:} 
+      # 常用連線參數 
+      charset: "utf8mb4" # 建議使用 utf8mb4，支援 emoji 
+      parseTime: ${DB_MYSQL_PARSE_TIME:true} # 自動解析 DATETIME/TIMESTAMP 為 time.Time 
+      loc: ${DB_MYSQL_LOC:} # 指定時區，避免時間錯誤 
+      # 連線池設定 (最佳實務) 
+      maxOpenConns: ${DB_MYSQL_MAX_OPEN_CONNS:16} # 最大開啟連線數 
+      maxIdleConns: ${DB_MYSQL_MAX_IDLE_CONNS:4} # 最大空閒連線數 
+      connMaxLifetime: ${DB_MYSQL_CONN_MAX_LIFETIME:300s} # 單一連線最長存活時間 (秒) 
+      connMaxIdleTime: ${DB_MYSQL_CONN_MAX_IDLE_TIME:60s} # 空閒連線最長存活時間 (秒) 
+      # 超時設定 
+      timeout: ${DB_MYSQL_TIMEOUT:5s} # 連線超時 
+      readTimeout: ${DB_MYSQL_READ_TIMEOUT:10s} # 讀取超時 
+      writeTimeout: ${DB_MYSQL_WRITE_TIMEOUT:10s} # 寫入超時
+    mongodb:
+      active: ${DB_MONGODB_ACTIVE:true}
+      hosts: 
+        - ${DB_MONGODB_HOSTS:127.0.0.1:27017}
+      replicaSet: ${DB_MONGODB_REPLICA_SET:}
+      maxPoolSize: ${DB_MONGODB_MAX_POOL_SIZE:16}
+      minPoolSize: ${DB_MONGODB_MIN_POOL_SIZE:4}
+      connectTimeoutMS: ${DB_MONGODB_CONNECT_TIMEOUT_MS:}
+      serverSelectionTimeoutMS: ${DB_MONGODB_SERVER_SELECTION_TIMEOUT_MS:}
+      heartbeatIntervalMS: ${DB_MONGODB_HEARTBEAT_INTERVAL_MS:}
+      readPreference: ${DB_MONGODB_READ_PREFERENCE:}
+      retryWrites: ${DB_MONGODB_RETRY_WRITES:}
+      retryReads: ${DB_MONGODB_RETRY_READS:}
+      writeConcern: ${DB_MONGODB_WRITE_CONCERN:}
+      username: ${DB_MONGODB_USERNAME}
+      password: ${DB_MONGODB_PASSWORD}
+      dbname: ${DB_MONGODB_DBNAME}
+
+servers:
+  http-server:
+    host: ${HTTP_SERVER_HOST}
+    port: ${HTTP_SERVER_PORT:8080}
+    cors:
+      enabled: ${HTTP_CORS_ENABLED:}
+      allowOrigins: ${HTTP_CORS_ALLOW_ORIGINS}
+      exposeHeaders: ${HTTP_CORS_EXPOSE_HEADERS}
+      allowCredentials: ${HTTP_CORS_ALLOW_CREDENTIALS:true}
+
+  webtransport-server:
+    host: ${WEBTRANSPORT_SERVER_HOST}
+    port: ${WEBTRANSPORT_SERVER_PORT:8443}
+    cert-file: ${WEBTRANSPORT_SERVER_CERT_FILE:/certs/tls.crt}
+    key-file: ${WEBTRANSPORT_SERVER_KEY_FILE:/certs/tls.key}
+    path: ${WEBTRANSPORT_SERVER_PATH:/webtransport}
+    use-self-cert: ${WEBTRANSPORT_SERVER_USE_SELF_CERT:false}
+
+log:
+  level: ${LOG_LEVEL:info}

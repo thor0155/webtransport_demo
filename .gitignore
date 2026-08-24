@@ -1,5 +1,6 @@
 .env
 **/wire_gen.go
 traefik/values-default.yaml
-localhost+3.pem
-localhost+3-key.pem
+*.pem
+.vscode/
+bin/

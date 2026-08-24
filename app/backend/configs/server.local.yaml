@@ -1,0 +1,22 @@
+components:
+  db:
+    mysql:
+      dbname: ${DB_MYSQL_DBNAME:test} 
+    mongodb:
+      username: ${DB_MONGODB_USERNAME:root}
+      password: ${DB_MONGODB_PASSWORD:root}
+      dbname: ${DB_MONGODB_DBNAME:test}
+
+servers:
+  http-server:
+    cors:
+      enabled: ${HTTP_CORS_ENABLED:true}
+
+  webtransport-server:
+    port: 8443
+    cert-file: ${WEBTRANSPORT_CERT_FILE:../../localhost+2.pem}
+    key-file: ${WEBTRANSPORT_KEY_FILE:../../localhost+2-key.pem}
+    use-self-cert: true
+  
+log:
+  level: debug
