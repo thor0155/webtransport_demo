@@ -54,7 +54,7 @@ func (c *chatService) GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.M
 
 func (c *chatService) WriteMessage(ctx context.Context, roomName string, userId string, message string) (bson.ObjectID, time.Time, error) {
 
-	state := obj.NewWorkState("write_chat_message")
+	state := obj.NewWorkState()
 	c.workTracker.Track(state)
 	resultId := bson.NewObjectID()
 	createdAt := time.Now()
@@ -87,7 +87,7 @@ func NewChatService(logger *zap.Logger, chatRoomDao chatd.ChatRoomDao, chatMessa
 		logger:         logger.Named(name),
 	}
 	var err error
-	if svc.writeChatMessageCoroutine, err = ants.NewPool(runtime.NumCPU()); err != nil {
+	if svc.writeChatMessageCoroutine, err = ants.NewPool(runtime.NumCPU(), ants.WithMaxBlockingTasks(10000)); err != nil {
 		return nil, err
 	}
 

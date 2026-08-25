@@ -179,7 +179,10 @@ func (l *Lifecycle) handleRunners(wg *sync.WaitGroup) {
 func (l *Lifecycle) handlePendingWorks(ctx context.Context) error {
 	if len(l.pendingWorks) > 0 {
 		l.logger.Debug("waiting for pending work to finish", zap.Int("count", len(l.pendingWorks)))
-		l.workTracker.Track(l.pendingWorks...)
+		for _, work := range l.pendingWorks {
+			l.logger.Debug("work tracked", zap.String("name", work.Name()))
+			l.workTracker.Track(work)
+		}
 	}
 	if err := l.workTracker.Wait(ctx); err != nil {
 		return err

@@ -5,12 +5,16 @@ import (
 	"sync"
 )
 
+type Work interface {
+	Done() <-chan struct{}
+}
+
 type WorkTracker interface {
 	// Track adds [works] to the current tracking batch.
 	//
 	// A work tracked after Wait() takes its snapshot belongs to
 	// the next batch and does not affect that Wait().
-	Track(works ...PendingWork)
+	Track(works ...Work)
 
 	// Wait waits until all works that were tracked when Wait() took
 	// its snapshot are completed.
@@ -31,7 +35,7 @@ type workTracker struct {
 	current *workGroup
 }
 
-func (t *workTracker) Track(works ...PendingWork) {
+func (t *workTracker) Track(works ...Work) {
 
 	if len(works) == 0 {
 		return

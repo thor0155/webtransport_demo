@@ -13,7 +13,7 @@ type Objects = []Object
 // It does not describe "how to execute", but only "when it is considered complete".
 type PendingWork interface {
 	Object
-	Done() <-chan struct{}
+	Work
 }
 
 type Component interface {
