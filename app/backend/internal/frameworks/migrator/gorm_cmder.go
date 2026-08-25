@@ -3,6 +3,7 @@ package migrator
 import (
 	"api/internal/frameworks/cmder"
 
+	"github.com/cockroachdb/errors"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -48,7 +49,16 @@ func (cmder *GormMigrationCmder) FlagSet(f *pflag.FlagSet) {
 }
 
 func (cmder *GormMigrationCmder) Run(ctx cmder.CmderContext) {
-	migrate := gormigrate.New(cmder.gormProducerFunc(), gormigrate.DefaultOptions, cmder.migrations)
+	gorm := cmder.gormProducerFunc()
+	if gorm == nil {
+		ctx.Error(errors.New("gorm is nil"))
+		return
+	}
+	if len(cmder.migrations) == 0 {
+		ctx.Error(errors.New("there is no migrations"))
+		return
+	}
+	migrate := gormigrate.New(gorm, gormigrate.DefaultOptions, cmder.migrations)
 	args := ctx.Args()
 	logger := cmder.logger
 

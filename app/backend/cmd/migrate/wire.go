@@ -27,12 +27,14 @@ func GenLifecycle(logger *zap.Logger, configHelper config.ConfigHelper) (*obj.Li
 	wire.Build(
 		cmder.ProvideSet,
 		migrator.ProvideSet,
-		migration.GetMigrations,
+		migration.GetGormMigrations,
+		migration.GetMongoMigrations,
 		db.ProvideSet,
 		obj.LifecycleWithObjectsWireSet,
 		obj.ProvideEmptyLifecycleOptions,
 		provideObjects,
 		provideGormProducer,
+		provideMongoProducer,
 	)
 	return nil, nil
 }
@@ -46,4 +48,8 @@ func provideObjects(db db.Objects, cmder cmder.Objects) obj.Objects {
 
 func provideGormProducer(mysql db.MysqlDB) migrator.GormProducerFunc {
 	return mysql.Client
+}
+
+func provideMongoProducer(mongo db.MongoDB) migrator.MongoDatabaseProducerFunc {
+	return mongo.Database
 }

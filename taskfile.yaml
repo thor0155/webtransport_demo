@@ -5,6 +5,14 @@ vars:
   BACKEND_DIR: "{{.APP_DIR}}/backend"
   FRONTEND_DIR: "{{.APP_DIR}}/frontend"
   DOCKER_COMPOSE_DIR: app
+  BUILD_VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo "v0.0.0"
+  BUILD_DATE:
+    sh: date +%Y%m%d%H%M
+  BUILD_COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+  BUILD_BRANCH:
+    sh: git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"
 
 tasks:
 
@@ -47,6 +55,7 @@ tasks:
       version: '{{.version}}'
     cmds:
       - go run ./cmd/migrate migrate gorm {{if ne .flag ""}}{{.flag}} {{end}}{{.version}}
+      - go run ./cmd/migrate migrate mongodb {{if ne .flag ""}}{{.flag}} {{end}}{{.version}}
 
   backend:build:
     desc: Build Go backend binary
@@ -113,6 +122,13 @@ tasks:
   # -------------------------
   # Docker
   # -------------------------
+  docker:run:backend:migrate:
+    desc: Start backend migrator container
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose run --rm backend_migrate migrate gorm
+      - docker compose run --rm backend_migrate migrate mongodb
+
   docker:up:
     desc: Start full stack with docker-compose
     dir: "{{.DOCKER_COMPOSE_DIR}}"
@@ -142,13 +158,37 @@ tasks:
     desc: Build docker images
     dir: "{{.DOCKER_COMPOSE_DIR}}"
     cmds:
-      - docker compose build
-      
+      - task: docker:build:backend
+      - task: docker:build:frontend
+  
   docker:build:backend:
     desc: Build backend docker image
     dir: "{{.DOCKER_COMPOSE_DIR}}"
     cmds:
-      - docker compose build backend
+      - task: docker:build:backend:server
+      - task: docker:build:backend:migrate
+
+  docker:build:backend:migrate:
+    desc: Build backend migrator docker image
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose build backend_migrate
+    env:
+      BACKEND_MIGRATE_BUILD_VERSION: '{{.BUILD_VERSION}}'
+      BACKEND_MIGRATE_BUILD_DATE: '{{.BUILD_DATE}}'
+      BACKEND_MIGRATE_BUILD_COMMIT: '{{.BUILD_COMMIT}}'
+      BACKEND_MIGRATE_BUILD_BRANCH: '{{.BUILD_BRANCH}}'
+      
+  docker:build:backend:server:
+    desc: Build backend server docker image
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose build backend_server
+    env:
+      BACKEND_SERVER_BUILD_VERSION: '{{.BUILD_VERSION}}'
+      BACKEND_SERVER_BUILD_DATE: '{{.BUILD_DATE}}'
+      BACKEND_SERVER_BUILD_COMMIT: '{{.BUILD_COMMIT}}'
+      BACKEND_SERVER_BUILD_BRANCH: '{{.BUILD_BRANCH}}'
 
   docker:build:frontend:
     desc: Build frontend docker image

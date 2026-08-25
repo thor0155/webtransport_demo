@@ -1,4 +1,4 @@
-FROM golang:1.25 AS builder
+FROM golang:1.26 AS builder
 
 WORKDIR /app
 
@@ -21,12 +21,12 @@ COPY . .
 RUN wire ./cmd/server
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags \
-    "-X ${VER_MODULE}.appName=${APP_NAME} \
-    -X ${VER_MODULE}.envName=${ENV_NAME} \
-    -X ${VER_MODULE}.buildVersion=${BUILD_VERSION} \
-    -X ${VER_MODULE}.buildTime=${BUILD_DATE} \
-    -X ${VER_MODULE}.buildCommit=${BUILD_COMMIT} \
-    -X ${VER_MODULE}.buildBranch=${BUILD_BRANCH}" \
+    "-X '${VER_MODULE}.appName=${APP_NAME}' \
+    -X '${VER_MODULE}.envName=${ENV_NAME}' \
+    -X '${VER_MODULE}.buildVersion=${BUILD_VERSION}' \
+    -X '${VER_MODULE}.buildTime=${BUILD_DATE}' \
+    -X '${VER_MODULE}.buildCommit=${BUILD_COMMIT}' \
+    -X '${VER_MODULE}.buildBranch=${BUILD_BRANCH}'" \
     -o server \
     ./cmd/server
 

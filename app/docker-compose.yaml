@@ -1,27 +1,41 @@
 services:
 
   backend_migrate:
-    image: demo-backend-migrate:${TAG:-latest}
+    image: demo-backend-migrate:${BACKEND_MIGRATE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile.migrate
-      # args:
-      #   - sdf=sdf
+      args:
+        ENV_NAME: ${BACKEND_MIGRATE_ENV_NAME:-production}
+        BUILD_VERSION: ${BACKEND_MIGRATE_BUILD_VERSION:-v0.0.0}
+        BUILD_DATE: ${BACKEND_MIGRATE_BUILD_DATE:-unknown}
+        BUILD_COMMIT: ${BACKEND_MIGRATE_BUILD_COMMIT:-unknown}
+        BUILD_BRANCH: ${BACKEND_MIGRATE_BUILD_BRANCH:-unknown}
     environment:
-      - DB_MYSQL_DBNAME=test
+      - LOG_LEVEL=debug
+    networks:
+      - mylab
 
   backend_server:
-    image: demo-backend-server:${TAG:-latest}
+    image: demo-backend-server:${BACKEND_SERVER_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile.server
+      args:
+        ENV_NAME: ${BACKEND_SERVER_ENV_NAME:-production}
+        BUILD_VERSION: ${BACKEND_SERVER_BUILD_VERSION:-v0.0.0}
+        BUILD_DATE: ${BACKEND_SERVER_BUILD_DATE:-unknown}
+        BUILD_COMMIT: ${BACKEND_SERVER_BUILD_COMMIT:-unknown}
+        BUILD_BRANCH: ${BACKEND_SERVER_BUILD_BRANCH:-unknown}
     ports:
       - "8080:8080"
       - "8443:8443/udp"
     environment:
       - WEBTRANSPORT_USE_SELF_CERT=true
       - GIN_MODE=test
-      - DB_MYSQL_DBNAME=test
+      - LOG_LEVEL=debug
+    networks:
+      - mylab
 
   frontend:
     image: demo-frontend:${TAG:-latest}
@@ -30,4 +44,11 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      - backend_server
+    networks:
+      - mylab
+
+networks:
+  mylab:
+    name: mylab
+    external: true

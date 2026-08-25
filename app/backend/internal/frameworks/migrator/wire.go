@@ -8,9 +8,10 @@ import (
 
 var ProvideSet = wire.NewSet(
 	NewGormMigrationCmder,
+	NewMongoMigrationCmder,
 	ProvideCmders,
 )
 
-func ProvideCmders(gorm *GormMigrationCmder) cmder.Cmders {
-	return cmder.Cmders{gorm}
+func ProvideCmders(gorm *GormMigrationCmder, mongo *MongoMigrationCmder) cmder.Cmders {
+	return cmder.Cmders{gorm, mongo}
 }

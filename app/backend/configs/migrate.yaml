@@ -2,11 +2,11 @@ components:
   db:
     mysql:
       active: ${DB_MYSQL_ACTIVE:true} 
-      host: ${DB_MYSQL_HOST:127.0.0.1} 
+      host: ${DB_MYSQL_HOST:mysql} 
       port: ${DB_MYSQL_PORT:3306}  
       user: ${DB_MYSQL_USER:root}
       password: ${DB_MYSQL_PASSWORD:} 
-      dbname: ${DB_MYSQL_DBNAME:} 
+      dbname: ${DB_MYSQL_DBNAME:demo} 
       # 常用連線參數 
       charset: "utf8mb4" # 建議使用 utf8mb4，支援 emoji 
       parseTime: ${DB_MYSQL_PARSE_TIME:true} # 自動解析 DATETIME/TIMESTAMP 為 time.Time 
@@ -20,7 +20,23 @@ components:
       timeout: ${DB_MYSQL_TIMEOUT:5s} # 連線超時 
       readTimeout: ${DB_MYSQL_READ_TIMEOUT:10s} # 讀取超時 
       writeTimeout: ${DB_MYSQL_WRITE_TIMEOUT:10s} # 寫入超時
-    # mongodb:
+    mongodb:
+      active: ${DB_MONGODB_ACTIVE:true}
+      hosts: 
+        - ${DB_MONGODB_HOSTS:mongo:27017}
+      replicaSet: ${DB_MONGODB_REPLICA_SET:rs0}
+      maxPoolSize: ${DB_MONGODB_MAX_POOL_SIZE:}
+      minPoolSize: ${DB_MONGODB_MIN_POOL_SIZE:}
+      connectTimeoutMS: ${DB_MONGODB_CONNECT_TIMEOUT_MS:}
+      serverSelectionTimeoutMS: ${DB_MONGODB_SERVER_SELECTION_TIMEOUT_MS:}
+      heartbeatIntervalMS: ${DB_MONGODB_HEARTBEAT_INTERVAL_MS:}
+      readPreference: ${DB_MONGODB_READ_PREFERENCE:}
+      retryWrites: ${DB_MONGODB_RETRY_WRITES:}
+      retryReads: ${DB_MONGODB_RETRY_READS:}
+      writeConcern: ${DB_MONGODB_WRITE_CONCERN:}
+      username: ${DB_MONGODB_USERNAME:root}
+      password: ${DB_MONGODB_PASSWORD:root}
+      dbname: ${DB_MONGODB_DBNAME:demo}
 
 servers:
   cmder:

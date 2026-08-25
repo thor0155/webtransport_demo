@@ -1,7 +1,14 @@
 components:
   db:
     mysql:
-      dbname: ${DB_MYSQL_DBNAME:test} 
+      host: ${DB_MYSQL_HOST:127.0.0.1} 
+      dbname: ${DB_MYSQL_DBNAME:test}
+    mongodb:
+      hosts: 
+        - ${DB_MONGODB_HOSTS:127.0.0.1:27017}
+      username: ${DB_MONGODB_USERNAME:root}
+      password: ${DB_MONGODB_PASSWORD:root}
+      dbname: ${DB_MONGODB_DBNAME:test} 
 
 log:
   level: ${LOG_LEVEL:debug}
