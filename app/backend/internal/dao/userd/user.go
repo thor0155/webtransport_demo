@@ -18,7 +18,7 @@ func (*userDao) MustGetUser(gorm *gorm.DB, userId string, userName string) (*ent
 
 	var result entity.User
 	if err := gorm.Where("id=?", userId).Attrs(entity.User{
-		ID:   userId,
+		Id:   userId,
 		Name: userName,
 	}).FirstOrCreate(&result).Error; err != nil {
 		return nil, errors.WithStack(err)

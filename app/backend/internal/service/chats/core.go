@@ -14,6 +14,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/panjf2000/ants/v2"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.uber.org/zap"
 )
 
 type ChatService interface {
@@ -22,6 +23,7 @@ type ChatService interface {
 }
 
 type chatService struct {
+	logger                    *zap.Logger
 	chatMessageDao            chatd.ChatMessageDao
 	chatRoomDao               chatd.ChatRoomDao
 	workTracker               obj.WorkTracker
@@ -40,7 +42,7 @@ func (c *chatService) GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.M
 		var member model.Member
 		c.setMemberModelByUserEntity(&member, user)
 		for _, s := range sessions {
-			if s.User.Id == user.ID {
+			if s.User.Id == user.Id {
 				c.setMemberModelBySession(&member, s)
 				break
 			}
@@ -52,33 +54,37 @@ func (c *chatService) GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.M
 
 func (c *chatService) WriteMessage(ctx context.Context, roomName string, userId string, message string) (bson.ObjectID, time.Time, error) {
 
-	work := newAsyncWork("write_chat_message")
-	if err := c.workTracker.Track(work); err != nil {
-		return bson.ObjectID{}, time.Time{}, err
-	}
+	state := obj.NewWorkState("write_chat_message")
+	c.workTracker.Track(state)
 	resultId := bson.NewObjectID()
 	createdAt := time.Now()
 
 	if err := c.writeChatMessageCoroutine.Submit(func() {
-		defer close(work.done)
+		defer state.Close()
 		gorm := db.GetGorm(ctx)
 		room, err := c.chatRoomDao.GetRoom(gorm, roomName)
 		if err != nil {
+			c.logger.Error("write chat message error", zap.Error(err))
 			return
 		}
-		c.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(resultId, room.ID, userId, message, createdAt))
+		if err := c.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(resultId, room.Id, userId, message, createdAt)); err != nil {
+			c.logger.Error("write chat message error", zap.Error(err))
+		}
 	}); err != nil {
+		state.Close()
 		return bson.ObjectID{}, time.Time{}, errors.WithStack(err)
 	}
 
 	return resultId, createdAt, nil
 }
 
-func NewChatService(chatRoomDao chatd.ChatRoomDao, chatMessageDao chatd.ChatMessageDao, workTracker obj.WorkTracker) (ChatService, error) {
+func NewChatService(logger *zap.Logger, chatRoomDao chatd.ChatRoomDao, chatMessageDao chatd.ChatMessageDao, workTracker obj.WorkTracker) (ChatService, error) {
+	name := "chat_service"
 	svc := &chatService{
 		workTracker:    workTracker,
 		chatRoomDao:    chatRoomDao,
 		chatMessageDao: chatMessageDao,
+		logger:         logger.Named(name),
 	}
 	var err error
 	if svc.writeChatMessageCoroutine, err = ants.NewPool(runtime.NumCPU()); err != nil {
@@ -95,6 +101,6 @@ func (c *chatService) setMemberModelBySession(member *model.Member, session *wts
 }
 
 func (c *chatService) setMemberModelByUserEntity(member *model.Member, user *entity.User) {
-	member.Id = user.ID
+	member.Id = user.Id
 	member.Name = user.Name
 }

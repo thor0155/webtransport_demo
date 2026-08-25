@@ -49,7 +49,7 @@ func NewLifecycle(logger *zap.Logger, manager *Manager, opts ...LifecycleOption)
 	}
 	var err error
 	if l.componentCoroutine, err = coroutine.NewSequenceCoroutine(func(c Component) error {
-		l.logger.Debug("initialize component", zap.String("name", c.Name()))
+		l.logger.Info("initialize component", zap.String("name", c.Name()))
 		return c.Init()
 	}); err != nil {
 		return nil, err
@@ -169,9 +169,9 @@ func (l *Lifecycle) handleRunners(wg *sync.WaitGroup) {
 		wg.Add(1)
 		go func(r Runner) {
 			defer wg.Done()
-			l.logger.Debug("starting", zap.String("name", r.Name()))
+			l.logger.Info("starting", zap.String("name", r.Name()))
 			r.Start()
-			l.logger.Debug("stopped", zap.String("name", r.Name()))
+			l.logger.Info("stopped", zap.String("name", r.Name()))
 		}(runner)
 	}
 }
@@ -179,12 +179,7 @@ func (l *Lifecycle) handleRunners(wg *sync.WaitGroup) {
 func (l *Lifecycle) handlePendingWorks(ctx context.Context) error {
 	if len(l.pendingWorks) > 0 {
 		l.logger.Debug("waiting for pending work to finish", zap.Int("count", len(l.pendingWorks)))
-
-		for _, work := range l.pendingWorks {
-			if err := l.workTracker.Track(work); err != nil {
-				return err
-			}
-		}
+		l.workTracker.Track(l.pendingWorks...)
 	}
 	if err := l.workTracker.Wait(ctx); err != nil {
 		return err

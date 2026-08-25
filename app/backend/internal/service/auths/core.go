@@ -67,6 +67,6 @@ func NewAuthService(webtransportHub *wts.Hub, userDao userd.UserDao, chatRoomDao
 }
 
 func (a *authService) setUserModel(targetModel *model.User, user *entity.User) {
-	targetModel.Id = user.ID
+	targetModel.Id = user.Id
 	targetModel.Name = user.Name
 }

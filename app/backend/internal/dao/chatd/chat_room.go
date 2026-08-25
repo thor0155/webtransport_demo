@@ -35,7 +35,7 @@ func (c *chatRoomDao) CreateRoomAndUserList(gormDb *gorm.DB, roomName string, us
 		return errors.WithStack(err)
 	}
 	if err := gormDb.Clauses(c.chatRoomUserInsertIgnoreClause).Create(entity.ChatRoomUsers{
-		ChatRoomId: room.ID,
+		ChatRoomId: room.Id,
 		UserId:     userId,
 	}).Error; err != nil {
 		return errors.WithStack(err)
