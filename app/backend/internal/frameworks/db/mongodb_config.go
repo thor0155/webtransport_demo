@@ -16,10 +16,16 @@ type MongoConfig struct {
 	RetryWrites    bool   `mapstructure:"retryWrites"`
 	RetryReads     bool   `mapstructure:"retryReads"`
 	// e.g. majority, w:1, w:2, w:3, w: "majority", w: "tagSet", wtimeout: 1000
-	WriteConcern string `mapstructure:"writeConcern"`
-	Username     string `mapstructure:"username"`
-	Password     string `mapstructure:"password"`
-	DbName       string `mapstructure:"dbname"`
+	WriteConcern string         `mapstructure:"writeConcern"`
+	Username     string         `mapstructure:"username"`
+	Password     string         `mapstructure:"password"`
+	DbName       string         `mapstructure:"dbname"`
+	Log          MongoLogConfig `mapstructure:"log"`
+}
+
+type MongoLogConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+	Debug   bool `mapstructure:"debug"`
 }
 
 func NewMongoConfig(configHelper config.ConfigHelper) (*MongoConfig, error) {

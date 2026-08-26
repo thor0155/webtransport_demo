@@ -65,6 +65,16 @@ func (m *mongoDB) Init() error {
 		SetRetryWrites(m.cfg.RetryWrites).
 		SetRetryReads(m.cfg.RetryReads)
 
+	if m.cfg.Log.Enabled {
+		level := options.LogLevelInfo
+		if m.cfg.Log.Debug {
+			level = options.LogLevelDebug
+		}
+		opts.SetLoggerOptions(options.Logger().
+			SetSink(NewZapLogSink(m.logger)).
+			SetComponentLevel(options.LogComponentCommand, level))
+	}
+
 	var err error
 	if m.cfg.Username != "" {
 		opts.SetAuth(options.Credential{

@@ -8,7 +8,10 @@ components:
         - ${DB_MONGODB_HOSTS:127.0.0.1:27017}
       username: ${DB_MONGODB_USERNAME:root}
       password: ${DB_MONGODB_PASSWORD:root}
-      dbname: ${DB_MONGODB_DBNAME:test} 
+      dbname: ${DB_MONGODB_DBNAME:test}
+      log:
+        enabled: ${DB_MONGODB_LOG_ENABLED:true}
+        debug: ${DB_MONGODB_LOG_DEBUG:true} 
 
 log:
   level: ${LOG_LEVEL:debug}

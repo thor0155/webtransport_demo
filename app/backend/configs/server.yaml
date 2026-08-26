@@ -37,6 +37,9 @@ components:
       username: ${DB_MONGODB_USERNAME}
       password: ${DB_MONGODB_PASSWORD}
       dbname: ${DB_MONGODB_DBNAME:demo}
+      log:
+        enabled: ${DB_MONGODB_LOG_ENABLED:}
+        debug: ${DB_MONGODB_LOG_DEBUG:}
 
 servers:
   http-server:

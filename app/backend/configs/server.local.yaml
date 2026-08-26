@@ -9,6 +9,9 @@ components:
       username: ${DB_MONGODB_USERNAME:root}
       password: ${DB_MONGODB_PASSWORD:root}
       dbname: ${DB_MONGODB_DBNAME:test}
+      log:
+        enabled: true
+        debug: ${DB_MONGODB_LOG_DEBUG:true}
 
 servers:
   http-server:
@@ -17,8 +20,8 @@ servers:
 
   webtransport-server:
     port: 8443
-    cert-file: ${WEBTRANSPORT_CERT_FILE:../../localhost+2.pem}
-    key-file: ${WEBTRANSPORT_KEY_FILE:../../localhost+2-key.pem}
+    # cert-file: ${WEBTRANSPORT_CERT_FILE:../../localhost+2.pem}
+    # key-file: ${WEBTRANSPORT_KEY_FILE:../../localhost+2-key.pem}
     use-self-cert: true
   
 log:
