@@ -1,0 +1,69 @@
+version: "3"
+
+vars:
+  env: '{{.env | default "local"}}'
+
+tasks:
+  apply:
+    desc: Apply k8s manifests
+    vars:
+      cert: '{{.cert | default "my-cert-keygen"}}'
+    cmds:
+      - task: apply:bootstrap
+        # vars:
+        #   env: '{{.env}}'
+      - kubectl wait --for=condition=Ready certificate/{{.cert}} -n {{.env}} --timeout=30s
+      - task: apply:app
+        # vars:
+        #   env: '{{.env}}'
+      
+  apply:app:
+    desc: Apply k8s manifests for app only
+    cmds:
+      - kubectl apply -k deploy/app/overlays/{{.env}}
+
+  apply:bootstrap:
+    desc: Apply k8s manifests for bootstrap only
+    cmds:
+      - kubectl apply -k deploy/bootstrap/overlays/{{.env}}
+
+  delete:
+    desc: Delete k8s manifests
+    cmds:
+      - kubectl delete ns/{{.env}}
+      
+  delete:app:
+    desc: Delete k8s manifests for app only
+    cmds:
+      - kubectl delete -k deploy/app/overlays/{{.env}}
+
+  delete:bootstrap:
+    desc: Delete k8s manifests for bootstrap only
+    cmds:
+      - kubectl delete -k deploy/bootstrap/overlays/{{.env}}
+
+  get:
+    desc: Get all resources
+    cmds:
+      - kubectl get all -A
+
+  logs:
+    desc: Get backend logs
+    cmds:
+      - kubectl logs -f deploy/backend
+
+  restart:
+    desc: Restart backend and frontend pods
+    cmds:
+      - task: restart:backend
+      - task: restart:frontend
+
+  restart:backend:
+    desc: Restart backend pods
+    cmds:
+      - kubectl rollout restart deployment backend -n {{.env}}
+
+  restart:frontend:
+    desc: Restart frontend pods
+    cmds:
+      - kubectl rollout restart deployment frontend -n {{.env}}

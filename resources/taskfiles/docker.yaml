@@ -1,0 +1,76 @@
+version: "3"
+
+tasks:
+  run:backend:migrate:
+    desc: Start backend migrator container
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose run --rm backend_migrate migrate gorm
+      - docker compose run --rm backend_migrate migrate mongodb
+
+  up:
+    desc: Start full stack with docker-compose
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      # - docker compose up --build
+      - docker compose up -d
+
+  down:
+    desc: Stop docker-compose
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose down
+  
+  ps:
+    desc: Show running containers
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose ps
+
+  logs:
+    desc: Show docker logs
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose logs -f
+
+  build:
+    desc: Build docker images
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - task: build:backend
+      - task: build:frontend
+  
+  build:backend:
+    desc: Build backend docker image
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - task: build:backend:server
+      - task: build:backend:migrate
+
+  build:backend:migrate:
+    desc: Build backend migrator docker image
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose build backend_migrate
+    env:
+      BACKEND_MIGRATE_BUILD_VERSION: '{{.BUILD_VERSION}}'
+      BACKEND_MIGRATE_BUILD_DATE: '{{.BUILD_DATE}}'
+      BACKEND_MIGRATE_BUILD_COMMIT: '{{.BUILD_COMMIT}}'
+      BACKEND_MIGRATE_BUILD_BRANCH: '{{.BUILD_BRANCH}}'
+      
+  build:backend:server:
+    desc: Build backend server docker image
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose build backend_server
+    env:
+      BACKEND_SERVER_BUILD_VERSION: '{{.BUILD_VERSION}}'
+      BACKEND_SERVER_BUILD_DATE: '{{.BUILD_DATE}}'
+      BACKEND_SERVER_BUILD_COMMIT: '{{.BUILD_COMMIT}}'
+      BACKEND_SERVER_BUILD_BRANCH: '{{.BUILD_BRANCH}}'
+
+  build:frontend:
+    desc: Build frontend docker image
+    dir: "{{.DOCKER_COMPOSE_DIR}}"
+    cmds:
+      - docker compose build frontend

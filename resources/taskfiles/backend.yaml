@@ -1,0 +1,79 @@
+version: "3"
+
+tasks:
+  run:
+    desc: Run Go backend (migrate + server) locally
+    cmds:
+      - task: run:migrate
+      - task: run:server
+
+  run:server:
+    desc: Run Go backend server locally
+    dir: "{{.BACKEND_DIR}}"
+    deps:
+      - task: wire:gen 
+        vars:
+          folder: "/cmd/server"
+    vars:
+      gin_mode: '{{.gin_mode | default ""}}'
+    env:
+      GIN_MODE: '{{.gin_mode}}'
+    cmds:
+      - go run ./cmd/server
+
+  run:migrate:
+    desc: Run Go backend migration locally
+    dir: "{{.BACKEND_DIR}}"
+    deps:
+      - task: wire:gen 
+        vars:
+          folder: "/cmd/migrate"
+    vars:
+      flag: '{{.flag}}'
+      version: '{{.version}}'
+    cmds:
+      - go run ./cmd/migrate migrate gorm {{if ne .flag ""}}{{.flag}} {{end}}{{.version}}
+      - go run ./cmd/migrate migrate mongodb {{if ne .flag ""}}{{.flag}} {{end}}{{.version}}
+
+  build:server:
+    desc: Build Go backend server binary
+    dir: "{{.BACKEND_DIR}}"
+    deps:
+      - task: wire:gen 
+        vars:
+          folder: "/cmd/server"
+    cmds:
+      - go build -o bin/server ./cmd/server
+
+  test:
+    desc: Run backend tests
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - go test ./...
+
+  tidy:
+    desc: Automated adjustment Go module of backend
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - go mod tidy
+
+  # -------------------------
+  # go wire
+  # -------------------------
+  wire:ensure:
+    desc: Install wire if not already installed
+    status:
+      - which wire
+    cmds:
+      - go install github.com/google/wire/cmd/wire@latest
+
+  wire:gen:
+    desc: Run wire code generation
+    dir: "{{.dir}}"
+    deps:
+      - wire:ensure
+    vars:
+      folder: '{{.folder | default "/cmd"}}'
+      dir: '{{.dir | default .BACKEND_DIR}}'
+    cmds:
+      - wire .{{.folder}}/...

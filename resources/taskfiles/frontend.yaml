@@ -1,0 +1,20 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install frontend dependencies
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - npm install
+
+  dev:
+    desc: Run frontend dev server
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - npm run dev
+
+  build:
+    desc: Build frontend
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - npm run build
