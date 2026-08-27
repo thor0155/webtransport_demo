@@ -1,10 +1,8 @@
 package wts
 
 import (
-	"api/internal/model"
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
@@ -25,7 +23,7 @@ func NewHandler(wt *webtransport.Server, hub *Hub, logger *zap.Logger, messageHa
 	h := &Handler{
 		wt:                     wt,
 		hub:                    hub,
-		logger:                 logger,
+		logger:                 logger.Named("handler"),
 		messageHandlerRegistry: messageHandlerRegistry,
 	}
 	h.cancelCtx, h.cancelFunc = context.WithCancel(context.Background())
@@ -62,14 +60,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer h.handleDisconnect(s)
 
 	if err = h.handleConnect(s); err != nil {
-		if b, err := model.EncodeLogPayload(model.LogLevelError, err.Error()); err == nil {
-			if err := s.SendMessage(ResponseTypeLog, b); err == nil {
-				ctx, cancelFunc := context.WithTimeout(h.cancelCtx, time.Second)
-				defer cancelFunc()
-				s.WriteLoop(ctx)
-			}
-		}
-
 		h.logger.Error("failed on connected", zap.Error(err))
 		return
 	}
@@ -78,12 +68,21 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.ReadLoop(h.handleReadLoop(s))
 }
 
-func (h *Handler) handleReadLoop(s *Session) func(MessageType, []byte) error {
-	return func(t MessageType, b []byte) error {
-		if f, ok := h.messageHandlerRegistry.request[t]; ok {
-			return f(NewHandlerContext(h.cancelCtx, h.hub, s, b))
+func (h *Handler) handleReadLoop(s *Session) SessionReadHandlerFunc {
+	return func(header *Header, b []byte) error {
+		if heandlers, ok := h.messageHandlerRegistry.request[header.Type]; ok {
+			ctx := NewHandlerContext(h.cancelCtx, h.hub, s, header, b, heandlers)
+			ctx.Next()
+			for _, err := range ctx.errors {
+				if errors.HasType(err, (*errorTerminates)(nil)) {
+					return err
+				} else {
+					h.logger.Error("handler error", zap.Uint8("type", header.Type), zap.Error(err))
+				}
+			}
+			return nil
 		}
-		return errors.Newf("%v handler does not exist", t)
+		return errors.Newf("%v reader handler does not exist", header.Type)
 	}
 }
 
@@ -93,26 +92,19 @@ func (h *Handler) handleConnect(s *Session) error {
 		return err
 	}
 
-	if header.Type != RequestTypeHello {
-		return errors.New("first message must be hello")
-	}
+	ctx := NewHandlerContext(h.cancelCtx, h.hub, s, header, data, h.messageHandlerRegistry.onConnected)
+	ctx.Next()
 
-	ctx := NewHandlerContext(h.cancelCtx, h.hub, s, data)
-	for _, f := range h.messageHandlerRegistry.onConnected {
-		if err := f(ctx); err != nil {
-			return err
-		}
+	if len(ctx.errors) > 0 {
+		return ctx.errors[0]
 	}
 	return nil
 }
 
 func (h *Handler) handleDisconnect(s *Session) {
-
 	defer s.Close()
-	ctx := NewHandlerContext(h.cancelCtx, h.hub, s, nil)
-
 	for _, f := range h.messageHandlerRegistry.onDisconnected {
-		if err := f(ctx); err != nil {
+		if err := f(h.cancelCtx, h.hub, s); err != nil {
 			h.logger.Error("failed on disconnected", zap.Error(err))
 		}
 	}

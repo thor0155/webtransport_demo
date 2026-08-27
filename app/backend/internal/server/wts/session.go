@@ -22,7 +22,7 @@ const (
 
 type Session struct {
 	User        model.User
-	send        chan OutgoingMessage
+	send        chan outgoingMessage
 	done        chan struct{}
 	writeDone   chan struct{}
 	connectedAt time.Time
@@ -42,6 +42,8 @@ type SessionJoinedRoom struct {
 }
 
 type SessionJoinedRooms []*SessionJoinedRoom
+
+type SessionReadHandlerFunc func(*Header, []byte) error
 
 func (s *SessionJoinedRooms) ToRooms() Rooms {
 	rooms := make(Rooms, 0, len(*s))
@@ -83,13 +85,21 @@ func (s *Session) SendMessage(t MessageType, data []byte) error {
 	}
 
 	select {
-	case s.send <- OutgoingMessage{Type: t, Data: data}:
+	case s.send <- outgoingMessage{Type: t, Data: data}:
 		return nil
 	default:
 		// queue full
 		return errors.New("message pipeline full")
 
 	}
+}
+
+func (s *Session) SyncSendMessage(t MessageType, data []byte) error {
+
+	if s.closed.Load() {
+		return errors.New("failed send message, it's closed")
+	}
+	return Write(s.stream, t, data)
 }
 
 func (s *Session) Close() {
@@ -130,7 +140,7 @@ func (s *Session) WriteLoop(ctx context.Context) {
 					return
 				}
 				s.logger.Error("stream write",
-					zap.Error(err), zap.Uint8("message-type", uint8(msg.Type)))
+					zap.String("session", s.id), zap.Error(err), zap.Uint8("message-type", uint8(msg.Type)))
 			}
 		case <-ctx.Done():
 			return
@@ -143,7 +153,7 @@ func (s *Session) WriteLoop(ctx context.Context) {
 	}
 }
 
-func (s *Session) ReadLoop(handler func(MessageType, []byte) error) {
+func (s *Session) ReadLoop(handler SessionReadHandlerFunc) {
 
 	for {
 
@@ -155,8 +165,8 @@ func (s *Session) ReadLoop(handler func(MessageType, []byte) error) {
 			s.logger.Error("read failed", zap.Error(err))
 		}
 
-		if err = handler(header.Type, payload); err != nil {
-			s.logger.Error("handler fail", zap.Error(err))
+		if err = handler(header, payload); err != nil {
+			s.logger.Error("handler fail and terminate", zap.String("session", s.id), zap.Error(err))
 			return
 		}
 	}
@@ -215,7 +225,7 @@ func NewSession(
 		conn:        wt,
 		connectedAt: time.Now(),
 		rooms:       make(map[string]*SessionJoinedRoom),
-		send:        make(chan OutgoingMessage, 128),
+		send:        make(chan outgoingMessage, 128),
 		done:        make(chan struct{}),
 		writeDone:   make(chan struct{}),
 		logger:      logger,

@@ -6,31 +6,9 @@ const (
 	Version    uint8  = 1
 )
 
-type MessageType byte
-type RequestMessageType = MessageType
+type MessageType = byte
 
-const (
-	RequestTypeNone RequestMessageType = iota
-	RequestTypePing
-	RequestTypeHello
-	RequestTypeChat
-)
-
-type ResponseMessageType = MessageType
-
-const (
-	ResponseTypeNone ResponseMessageType = iota
-	ResponseTypeLog
-	ResponseTypePong
-	ResponseTypeLeave
-	ResponseTypeWelcome
-	ResponseTypeMembers
-	ResponseTypeJoin
-	ResponseTypeChat
-	ResponseTypeRoomInfo
-)
-
-type OutgoingMessage struct {
+type outgoingMessage struct {
 	Type MessageType
 	Data []byte
 }

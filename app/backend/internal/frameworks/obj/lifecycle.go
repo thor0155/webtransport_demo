@@ -146,19 +146,20 @@ func (l *Lifecycle) Run() error {
 
 	// 4. close all servers
 	if err := l.closeServerCoroutine.Invoke(shutdownTimeoutCtx); err != nil && errors.Is(err, context.DeadlineExceeded) {
-		return err
+		return errors.Wrap(err, "close all servers failed")
 	}
 
 	// 5. wait pending works
 	if err := l.handlePendingWorks(shutdownTimeoutCtx); err != nil && errors.Is(err, context.DeadlineExceeded) {
-		return err
+		return errors.Wrap(err, "wait pending works failed")
 	}
 
 	// 6. close all closeables
 	if err := l.closeableCoroutine.Invoke(shutdownTimeoutCtx); err != nil && errors.Is(err, context.DeadlineExceeded) {
-		return err
+		return errors.Wrap(err, "close all closeables failed")
 	}
 
+	l.logger.Debug("waiting WaitGroup to finish")
 	wg.Wait()
 	l.logger.Info("lifecycle shutdown complete")
 	return nil

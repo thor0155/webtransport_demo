@@ -79,6 +79,7 @@ func Write(w io.Writer, t MessageType, payload []byte) error {
 		Magic:   Magic,
 		Version: Version,
 		Type:    t,
+		Flags:   FlagNone,
 		Length:  uint32(len(payload)),
 	}
 

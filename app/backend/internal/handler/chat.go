@@ -3,10 +3,12 @@ package handler
 import (
 	"api/internal/frameworks/db"
 	"api/internal/model"
+	"api/internal/protocol"
 	"api/internal/server/wts"
 	"api/internal/service/auths"
 	"api/internal/service/chats"
 	"api/internal/utils"
+	"context"
 
 	"github.com/cockroachdb/errors"
 	"go.uber.org/zap"
@@ -30,43 +32,61 @@ func NewChatController(
 }
 
 func (c *chatController) Register(registry *wts.MessageHandlerRegistry) {
-	registry.OnConncted(c.handshake)
+	registry.OnConncted(c.handshakeErrorReply, c.handshake)
 	registry.OnDisconnected(c.leave)
-	registry.OnRequest(wts.RequestTypeChat, c.handleChat)
-	registry.OnRequest(wts.RequestTypePing, c.handlePing)
+	registry.OnRequest(protocol.RequestTypeChat, c.handleChat)
+	registry.OnRequest(protocol.RequestTypePing, c.handlePing)
 
 }
 
-func (c *chatController) leave(ctx wts.Context) error {
-
-	s := ctx.GetSession()
+func (c *chatController) leave(ctx context.Context, hub *wts.Hub, session *wts.Session) error {
 
 	// who leaved
-	data, err := model.EncodeLeavedMember(s.GetId(), s.User.Id)
+	data, err := model.EncodeLeavedMember(session.GetId(), session.User.Id)
 	if err != nil {
 		return err
 	}
 
-	joinedRooms := s.GetRooms()
+	joinedRooms := session.GetRooms()
 	if len(joinedRooms) == 0 {
 		return nil
 	}
 	rooms := joinedRooms.ToRooms()
-	wts.BroadcastAllRoom(rooms, wts.ResponseTypeLeave, data)
+	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeLeave, data)
 
 	// update room info. TODO: maybe more rooms
 	room := rooms.First()
-	room.Leave(s)
+	room.Leave(session)
 	data, err = utils.Encode(room.Info())
 	if err != nil {
 		return err
 	}
-	wts.BroadcastAllRoom(rooms, wts.ResponseTypeRoomInfo, data)
+	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeRoomInfo, data)
 
 	return nil
 }
 
+func (c *chatController) handshakeErrorReply(ctx wts.Context) error {
+
+	ctx.Next()
+	session := ctx.GetSession()
+	for _, err := range ctx.GetErrors() {
+		if b, err := model.EncodeLogPayload(model.LogLevelError, err.Error()); err != nil {
+			return err
+		} else {
+			if err := session.SyncSendMessage(protocol.ResponseTypeLog, b); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (c *chatController) handshake(ctx wts.Context) error {
+
+	if ctx.GetType() != protocol.RequestTypeHello {
+		return errors.New("first message must be hello")
+	}
 
 	session := ctx.GetSession()
 	dbCtx := db.NewContext(ctx).WithGorm(c.mysql.Session())
@@ -95,7 +115,7 @@ func (c *chatController) handshake(ctx wts.Context) error {
 
 func (c *chatController) handleChat(ctx wts.Context) error {
 
-	var request model.ChatRequestPayload
+	var request model.ChatMessageRequest
 	if err := utils.Decode(ctx.GetPayload(), &request); err != nil {
 		return err
 	}
@@ -106,6 +126,7 @@ func (c *chatController) handleChat(ctx wts.Context) error {
 
 	messageId, createdAt, err := c.chatService.WriteMessage(dbCtx, room.Name(), ctx.GetSession().User.Id, request.Text)
 	if err != nil {
+		// TODO: if an ants.ErrPoolOverload happened, just log error & send to client only
 		return err
 	}
 
@@ -115,13 +136,13 @@ func (c *chatController) handleChat(ctx wts.Context) error {
 	}
 	// c.logger.Debug("broadcast chat", zap.String("messageId", messageId.Hex()), zap.Time("createdAt", createdAt))
 
-	wts.BroadcastAllRoom([]*wts.Room{room}, wts.ResponseTypeChat, b)
+	wts.BroadcastAllRoom([]*wts.Room{room}, protocol.ResponseTypeChat, b)
 
 	return nil
 }
 
 func (c *chatController) handlePing(ctx wts.Context) error {
-	return ctx.GetSession().SendMessage(wts.ResponseTypePong, nil)
+	return ctx.GetSession().SendMessage(protocol.ResponseTypePong, nil)
 }
 
 // just the first room info
@@ -137,7 +158,7 @@ func (h *chatController) handleRoomInfo(s *wts.Session) error {
 	if err != nil {
 		return err
 	}
-	wts.BroadcastAllRoom(rooms, wts.ResponseTypeRoomInfo, data)
+	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeRoomInfo, data)
 	return nil
 }
 
@@ -169,7 +190,7 @@ func (h *chatController) handleWelcome(dbCtx *db.Context, s *wts.Session, reques
 		return err
 	}
 
-	return s.SendMessage(wts.ResponseTypeWelcome, data)
+	return s.SendMessage(protocol.ResponseTypeWelcome, data)
 }
 
 func (h *chatController) handleJoin(s *wts.Session) error {
@@ -181,7 +202,7 @@ func (h *chatController) handleJoin(s *wts.Session) error {
 
 	joinedRooms := s.GetRooms()
 	rooms := joinedRooms.ToRooms()
-	wts.BroadcastAllRoom(rooms, wts.ResponseTypeJoin, data)
+	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeJoin, data)
 	return nil
 }
 
@@ -206,5 +227,5 @@ func (h *chatController) handleMembers(ctx *db.Context, s *wts.Session) error {
 		return err
 	}
 
-	return s.SendMessage(wts.ResponseTypeMembers, data)
+	return s.SendMessage(protocol.ResponseTypeMembers, data)
 }
