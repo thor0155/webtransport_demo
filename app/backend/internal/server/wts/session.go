@@ -21,19 +21,20 @@ const (
 )
 
 type Session struct {
-	User        model.User
-	send        chan outgoingMessage
-	done        chan struct{}
-	writeDone   chan struct{}
-	connectedAt time.Time
-	id          string
-	conn        *webtransport.Session
-	once        sync.Once
-	closed      atomic.Bool
-	logger      *zap.Logger
-	stream      *webtransport.Stream
-	closeEvent  []func()
-	rooms       map[string]*SessionJoinedRoom
+	User           model.User
+	send           chan outgoingMessage
+	done           chan struct{}
+	connectedAt    time.Time
+	id             string
+	conn           *webtransport.Session
+	closeOnce      sync.Once
+	closed         atomic.Bool
+	logger         *zap.Logger
+	stream         *webtransport.Stream
+	closeEvent     []func()
+	rooms          map[string]*SessionJoinedRoom
+	writeWaitGroup sync.WaitGroup
+	writeMu        sync.RWMutex
 }
 
 type SessionJoinedRoom struct {
@@ -99,24 +100,24 @@ func (s *Session) SyncSendMessage(t MessageType, data []byte) error {
 	if s.closed.Load() {
 		return errors.New("failed send message, it's closed")
 	}
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
 	return Write(s.stream, t, data)
 }
 
 func (s *Session) Close() {
-	s.once.Do(func() {
-		if s.closed.Load() {
-			return
-		}
+	s.closeOnce.Do(func() {
+		s.closed.Store(true)
 		close(s.done)
 		close(s.send)
-		<-s.writeDone
+		s.writeWaitGroup.Wait()
 		s.stream.Close()
 		s.conn.CloseWithError(ClosedErrorCode, "close")
 		for _, f := range s.closeEvent {
 			f()
 		}
 		s.closeEvent = nil
-		s.closed.Store(true)
+		s.logger.Debug("session closed", zap.String("session", s.id))
 	})
 }
 
@@ -126,7 +127,15 @@ func (s *Session) IsClosed() bool {
 
 func (s *Session) WriteLoop(ctx context.Context) {
 
-	defer close(s.writeDone)
+	if s.closed.Load() {
+		return
+	}
+
+	s.writeMu.Lock()
+	s.writeWaitGroup.Add(1)
+	s.writeMu.Unlock()
+
+	defer s.writeWaitGroup.Done()
 	for {
 		select {
 		case msg, ok := <-s.send:
@@ -134,7 +143,10 @@ func (s *Session) WriteLoop(ctx context.Context) {
 				return
 			}
 
+			s.writeMu.Lock()
 			err := Write(s.stream, msg.Type, msg.Data)
+			s.writeMu.Unlock()
+
 			if err != nil {
 				if nettool.IsExpectedDisconnect(err) {
 					return
@@ -227,7 +239,6 @@ func NewSession(
 		rooms:       make(map[string]*SessionJoinedRoom),
 		send:        make(chan outgoingMessage, 128),
 		done:        make(chan struct{}),
-		writeDone:   make(chan struct{}),
-		logger:      logger,
+		logger:      logger.Named("session"),
 	}, nil
 }

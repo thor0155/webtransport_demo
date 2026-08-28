@@ -1,14 +1,15 @@
 package https
 
 import (
-	"api/internal/middleware"
 	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/requestid"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type RouterRegistry interface {
@@ -26,11 +27,8 @@ func ConvGinEngineToHandler(g *gin.Engine) http.Handler {
 func NewGinRouter(log *zap.Logger, cfg *HttpServerConfig, routerRegistries RouterRegistries) *gin.Engine {
 
 	r := gin.New()
-	// recovery (panic safe)
 	r.Use(gin.Recovery())
-	// custom middleware
-	r.Use(middleware.RequestID())
-	// r.Use(middleware.Logger(log))
+	r.Use(requestid.New())
 	r.Use(ginzap.GinzapWithConfig(log, &ginzap.Config{
 		TimeFormat: time.RFC3339,
 		UTC:        false,
@@ -38,6 +36,18 @@ func NewGinRouter(log *zap.Logger, cfg *HttpServerConfig, routerRegistries Route
 			"/healthz",
 			"/readyz",
 			"/livez",
+		},
+		Context: func(ctx *gin.Context) []zapcore.Field {
+			var fields []zapcore.Field
+
+			if len(ctx.Errors) > 0 {
+				errors := make([]error, 0, len(ctx.Errors))
+				for _, e := range ctx.Errors {
+					errors = append(errors, e.Err)
+				}
+				fields = append(fields, zap.Errors("errors", errors))
+			}
+			return append(fields, zap.String("request_id", requestid.Get(ctx)))
 		},
 	}))
 	r.Use(ginzap.RecoveryWithZap(log, true))

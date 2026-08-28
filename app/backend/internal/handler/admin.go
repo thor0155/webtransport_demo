@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: it's a private controller, In Kubernetes, requests should be controllable.
 type adminController struct {
 	logger  *zap.Logger
 	manager *obj.Manager

@@ -54,13 +54,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.hub.Register(s)
 	s.AddClosedEvent(func() {
 		h.hub.Unregister(s)
-		h.logger.Debug("session disconnected", zap.String("session_id", s.id))
 	})
 
 	defer h.handleDisconnect(s)
 
 	if err = h.handleConnect(s); err != nil {
-		h.logger.Error("failed on connected", zap.Error(err))
+		h.logger.Error("failed on connected and terminate", zap.Error(err))
 		return
 	}
 
@@ -95,8 +94,12 @@ func (h *Handler) handleConnect(s *Session) error {
 	ctx := NewHandlerContext(h.cancelCtx, h.hub, s, header, data, h.messageHandlerRegistry.onConnected)
 	ctx.Next()
 
-	if len(ctx.errors) > 0 {
-		return ctx.errors[0]
+	for _, err := range ctx.errors {
+		if errors.HasType(err, (*errorTerminates)(nil)) {
+			return err
+		} else {
+			h.logger.Error("connecting error", zap.Uint8("type", header.Type), zap.Error(err))
+		}
 	}
 	return nil
 }

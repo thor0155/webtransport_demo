@@ -170,9 +170,9 @@ func (l *Lifecycle) handleRunners(wg *sync.WaitGroup) {
 		wg.Add(1)
 		go func(r Runner) {
 			defer wg.Done()
-			l.logger.Info("starting", zap.String("name", r.Name()))
+			l.logger.Debug("starting", zap.String("name", r.Name()))
 			r.Start()
-			l.logger.Info("stopped", zap.String("name", r.Name()))
+			l.logger.Debug("stopped", zap.String("name", r.Name()))
 		}(runner)
 	}
 }

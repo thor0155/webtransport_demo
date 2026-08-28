@@ -10,13 +10,11 @@ import (
 	"api/internal/utils"
 	"context"
 
-	"github.com/cockroachdb/errors"
 	"go.uber.org/zap"
 )
 
 type chatController struct {
 	logger      *zap.Logger
-	authService auths.AuthService
 	chatService chats.ChatService
 	mysql       db.MysqlDB
 }
@@ -24,15 +22,13 @@ type chatController struct {
 func NewChatController(
 	logger *zap.Logger, authService auths.AuthService, chatService chats.ChatService, mysql db.MysqlDB) *chatController {
 	return &chatController{
-		logger:      logger,
-		authService: authService,
+		logger:      logger.Named("chat-controller"),
 		chatService: chatService,
 		mysql:       mysql,
 	}
 }
 
 func (c *chatController) Register(registry *wts.MessageHandlerRegistry) {
-	registry.OnConncted(c.handshakeErrorReply, c.handshake)
 	registry.OnDisconnected(c.leave)
 	registry.OnRequest(protocol.RequestTypeChat, c.handleChat)
 	registry.OnRequest(protocol.RequestTypePing, c.handlePing)
@@ -62,53 +58,6 @@ func (c *chatController) leave(ctx context.Context, hub *wts.Hub, session *wts.S
 		return err
 	}
 	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeRoomInfo, data)
-
-	return nil
-}
-
-func (c *chatController) handshakeErrorReply(ctx wts.Context) error {
-
-	ctx.Next()
-	session := ctx.GetSession()
-	for _, err := range ctx.GetErrors() {
-		if b, err := model.EncodeLogPayload(model.LogLevelError, err.Error()); err != nil {
-			return err
-		} else {
-			if err := session.SyncSendMessage(protocol.ResponseTypeLog, b); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (c *chatController) handshake(ctx wts.Context) error {
-
-	if ctx.GetType() != protocol.RequestTypeHello {
-		return errors.New("first message must be hello")
-	}
-
-	session := ctx.GetSession()
-	dbCtx := db.NewContext(ctx).WithGorm(c.mysql.Session())
-
-	if err := c.handleWelcome(dbCtx, session, ctx.GetPayload()); err != nil {
-		return err
-	}
-
-	// notify a member list
-	if err := c.handleMembers(dbCtx, session); err != nil {
-		return err
-	}
-
-	// notify a member joined
-	if err := c.handleJoin(session); err != nil {
-		return err
-	}
-
-	// notify a info of room
-	if err := c.handleRoomInfo(session); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -143,89 +92,4 @@ func (c *chatController) handleChat(ctx wts.Context) error {
 
 func (c *chatController) handlePing(ctx wts.Context) error {
 	return ctx.GetSession().SendMessage(protocol.ResponseTypePong, nil)
-}
-
-// just the first room info
-func (h *chatController) handleRoomInfo(s *wts.Session) error {
-
-	joinedRooms := s.GetRooms()
-	if len(joinedRooms) == 0 {
-		return nil
-	}
-	rooms := joinedRooms.ToRooms()
-	payload := rooms.First().Info()
-	data, err := utils.Encode(payload)
-	if err != nil {
-		return err
-	}
-	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeRoomInfo, data)
-	return nil
-}
-
-func (h *chatController) handleWelcome(dbCtx *db.Context, s *wts.Session, request []byte) error {
-
-	var hello model.HelloPayload
-	if err := utils.Decode(request, &hello); err != nil {
-		return err
-	}
-
-	if hello.Room == "" {
-		return errors.New("room required")
-	}
-	if hello.Id == "" {
-		return errors.New("user id required")
-	}
-
-	if _, err := h.authService.Login(dbCtx, s, hello); err != nil {
-		return err
-	}
-
-	payload := model.WelcomePayload{
-		UserId:  s.User.Id,
-		Session: s.GetId(),
-	}
-
-	data, err := utils.Encode(payload)
-	if err != nil {
-		return err
-	}
-
-	return s.SendMessage(protocol.ResponseTypeWelcome, data)
-}
-
-func (h *chatController) handleJoin(s *wts.Session) error {
-
-	data, err := model.EncodeJoinedMember(s.GetId(), &s.User, true, s.GetConnectedAt())
-	if err != nil {
-		return err
-	}
-
-	joinedRooms := s.GetRooms()
-	rooms := joinedRooms.ToRooms()
-	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeJoin, data)
-	return nil
-}
-
-func (h *chatController) handleMembers(ctx *db.Context, s *wts.Session) error {
-
-	joinedRooms := s.GetRooms()
-	if len(joinedRooms) == 0 {
-		return nil
-	}
-	rooms := joinedRooms.ToRooms()
-	room := rooms.First()
-
-	members, err := h.chatService.GetMemberList(ctx, room)
-	if err != nil {
-		return err
-	}
-
-	data, err := utils.Encode(model.MembersPayload{
-		Members: members,
-	})
-	if err != nil {
-		return err
-	}
-
-	return s.SendMessage(protocol.ResponseTypeMembers, data)
 }

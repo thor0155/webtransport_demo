@@ -12,12 +12,13 @@ var ProvideSet = wire.NewSet(
 	ProvideWtsHandlers,
 	NewAdminController,
 	NewChatController,
+	NewLoginController,
 )
 
-func ProvideHttpRouters(ctrl1 *adminController) https.RouterRegistries {
-	return https.RouterRegistries{ctrl1}
+func ProvideHttpRouters(c1 *adminController) https.RouterRegistries {
+	return https.RouterRegistries{c1}
 }
 
-func ProvideWtsHandlers(c1 *chatController) wts.HandlerRegisters {
-	return wts.HandlerRegisters{c1}
+func ProvideWtsHandlers(c1 *chatController, c2 *loginController) wts.HandlerRegisters {
+	return wts.HandlerRegisters{c1, c2}
 }
