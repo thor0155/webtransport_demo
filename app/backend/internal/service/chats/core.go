@@ -19,7 +19,7 @@ import (
 
 type ChatService interface {
 	GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.Member, error)
-	WriteMessage(ctx context.Context, roomName string, userId string, message string) (bson.ObjectID, time.Time, error)
+	WriteMessage(ctx context.Context, roomName string, userId string, message string) (ResultOfWriteMessage, error)
 }
 
 type chatService struct {
@@ -52,30 +52,29 @@ func (c *chatService) GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.M
 	return members, nil
 }
 
-func (c *chatService) WriteMessage(ctx context.Context, roomName string, userId string, message string) (bson.ObjectID, time.Time, error) {
+func (c *chatService) WriteMessage(ctx context.Context, roomName string, userId string, message string) (ResultOfWriteMessage, error) {
 
 	state := obj.NewWorkState()
 	c.workTracker.Track(state)
-	resultId := bson.NewObjectID()
+	messageId := bson.NewObjectID()
 	createdAt := time.Now()
 
 	if err := c.writeChatMessageCoroutine.Submit(func() {
 		defer state.Close()
-		gorm := db.GetGorm(ctx)
-		room, err := c.chatRoomDao.GetRoom(gorm, roomName)
+		room, err := c.chatRoomDao.GetRoom(roomName)
 		if err != nil {
 			c.logger.Error("write chat message error", zap.Error(err))
 			return
 		}
-		if err := c.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(resultId, room.Id, userId, message, createdAt)); err != nil {
+		if err := c.chatMessageDao.AppendMessage(ctx, entity.NewChatMessage(messageId, room.Id, userId, message, createdAt)); err != nil {
 			c.logger.Error("write chat message error", zap.Error(err))
 		}
 	}); err != nil {
 		state.Close()
-		return bson.ObjectID{}, time.Time{}, errors.WithStack(err)
+		return ResultOfWriteMessage{}, errors.WithStack(err)
 	}
 
-	return resultId, createdAt, nil
+	return ResultOfWriteMessage{MessageId: messageId, CreatedAt: createdAt}, nil
 }
 
 func NewChatService(logger *zap.Logger, chatRoomDao chatd.ChatRoomDao, chatMessageDao chatd.ChatMessageDao, workTracker obj.WorkTracker) (ChatService, error) {

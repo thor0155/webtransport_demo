@@ -93,9 +93,10 @@ export class ChatService {
         }
     }
 
-    sendChat(message: string) {
+    sendChat(roomName: string, message: string) {
         const payload: ChatRequestPayload = {
             text: message,
+            room: roomName,
         };
         this.send(RequestMessageType.Chat, payload);
     }

@@ -18,7 +18,7 @@ export function MessageInput() {
             return;
         }
 
-        sendChat(text);
+        sendChat(state.room,text);
 
         setMessage("");
     }

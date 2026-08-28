@@ -5,6 +5,7 @@ import (
 	"api/internal/frameworks/utils/gormtool"
 	"api/internal/model/entity"
 	"fmt"
+	"sync"
 
 	"github.com/cockroachdb/errors"
 	"gorm.io/gorm"
@@ -12,35 +13,36 @@ import (
 )
 
 type ChatRoomDao interface {
-	GetRoom(gorm *gorm.DB, room string) (*entity.ChatRoom, error)
+	GetRoom(roomName string) (*entity.ChatRoom, error)
 	GetUserList(gorm *gorm.DB, room string) ([]*entity.User, error)
-	CreateRoomAndUserList(gorm *gorm.DB, room string, userId string) error
+	CreateRoomAndUserList(gorm *gorm.DB, room string, userId string) (*entity.ChatRoom, error)
 }
 
 type chatRoomDao struct {
+	roomMap                        sync.Map
 	chatRoomUserInsertIgnoreClause clause.OnConflict
 }
 
-func (c *chatRoomDao) GetRoom(gorm *gorm.DB, room string) (*entity.ChatRoom, error) {
-	var result entity.ChatRoom
-	if err := gorm.Take(&result, "name=?", room).Error; err != nil {
-		return nil, errors.WithStack(err)
+func (c *chatRoomDao) GetRoom(roomName string) (*entity.ChatRoom, error) {
+	if o, exists := c.roomMap.Load(roomName); exists {
+		return o.(*entity.ChatRoom), nil
 	}
-	return &result, nil
+	return nil, errors.New("room " + roomName + " not found")
 }
 
-func (c *chatRoomDao) CreateRoomAndUserList(gormDb *gorm.DB, roomName string, userId string) error {
+func (c *chatRoomDao) CreateRoomAndUserList(gormDb *gorm.DB, roomName string, userId string) (*entity.ChatRoom, error) {
 	var room entity.ChatRoom
 	if err := gormDb.Where("name=?", roomName).Attrs(entity.ChatRoom{Name: roomName}).FirstOrCreate(&room).Error; err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 	if err := gormDb.Clauses(c.chatRoomUserInsertIgnoreClause).Create(entity.ChatRoomUsers{
 		ChatRoomId: room.Id,
 		UserId:     userId,
 	}).Error; err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
-	return nil
+	c.roomMap.Store(room.Name, &room)
+	return &room, nil
 }
 
 func (c *chatRoomDao) GetUserList(gorm *gorm.DB, room string) ([]*entity.User, error) {

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"api/internal/frameworks/db"
+	"api/internal/middleware"
 	"api/internal/model"
 	"api/internal/protocol"
 	"api/internal/server/wts"
@@ -10,6 +11,7 @@ import (
 	"api/internal/utils"
 	"context"
 
+	"github.com/cockroachdb/errors"
 	"go.uber.org/zap"
 )
 
@@ -30,9 +32,21 @@ func NewChatController(
 
 func (c *chatController) Register(registry *wts.MessageHandlerRegistry) {
 	registry.OnDisconnected(c.leave)
-	registry.OnRequest(protocol.RequestTypeChat, c.handleChat)
+	registry.OnRequest(protocol.RequestTypeChat, middleware.WebtransportErrorReply, c.handleChat)
 	registry.OnRequest(protocol.RequestTypePing, c.handlePing)
+	registry.OnRequest(protocol.RequestTypeChatHistory, c.handleHistory)
 
+}
+
+func (c *chatController) handleHistory(ctx wts.Context) error {
+	session := ctx.GetSession()
+	requestPayload := ctx.GetPayload()
+
+	// TODO: get history logic
+	_ = requestPayload
+	responsePayload := []byte{}
+
+	return session.SendMessage(protocol.ResponseTypeChatHistory, responsePayload)
 }
 
 func (c *chatController) leave(ctx context.Context, hub *wts.Hub, session *wts.Session) error {
@@ -50,14 +64,14 @@ func (c *chatController) leave(ctx context.Context, hub *wts.Hub, session *wts.S
 	rooms := joinedRooms.ToRooms()
 	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeLeave, data)
 
-	// update room info. TODO: maybe more rooms
-	room := rooms.First()
-	room.Leave(session)
-	data, err = utils.Encode(room.Info())
-	if err != nil {
-		return err
+	for _, room := range rooms {
+		room.Leave(session)
+		data, err = utils.Encode(room.Info())
+		if err != nil {
+			return err
+		}
+		wts.BroadcastAllRoom(rooms, protocol.ResponseTypeRoomInfo, data)
 	}
-	wts.BroadcastAllRoom(rooms, protocol.ResponseTypeRoomInfo, data)
 
 	return nil
 }
@@ -70,23 +84,26 @@ func (c *chatController) handleChat(ctx wts.Context) error {
 	}
 
 	session := ctx.GetSession()
-	room := session.GetRoom()
+	room := session.FindRoom(request.Room)
+
+	if room == nil {
+		return errors.New("room not found")
+	}
+
 	dbCtx := db.WithGorm(ctx, c.mysql.Session())
 
-	messageId, createdAt, err := c.chatService.WriteMessage(dbCtx, room.Name(), ctx.GetSession().User.Id, request.Text)
+	result, err := c.chatService.WriteMessage(dbCtx, request.Room, session.User.Id, request.Text)
 	if err != nil {
-		// TODO: if an ants.ErrPoolOverload happened, just log error & send to client only
 		return err
 	}
 
-	b, err := model.EncodeChatPayload(messageId.Hex(), &ctx.GetSession().User, request.Text, createdAt)
+	b, err := model.EncodeChatMessage(result.MessageId.Hex(), &session.User, request.Text, result.CreatedAt)
 	if err != nil {
 		return err
 	}
 	// c.logger.Debug("broadcast chat", zap.String("messageId", messageId.Hex()), zap.Time("createdAt", createdAt))
 
-	wts.BroadcastAllRoom([]*wts.Room{room}, protocol.ResponseTypeChat, b)
-
+	room.Room().Broadcast(protocol.ResponseTypeChat, b)
 	return nil
 }
 

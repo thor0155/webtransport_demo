@@ -7,5 +7,6 @@ export interface ChatPayload {
 }
 
 export interface ChatRequestPayload {
+    room: string;
     text: string;
 }

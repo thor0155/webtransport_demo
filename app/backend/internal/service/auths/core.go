@@ -44,7 +44,8 @@ func (a *authService) Login(ctx *db.Context, session *wts.Session, hello model.H
 
 		a.setUserModel(&session.User, user)
 
-		if err := a.chatRoomDao.CreateRoomAndUserList(ctx.GetGorm(), hello.Room, session.User.Id); err != nil {
+		_, err := a.chatRoomDao.CreateRoomAndUserList(ctx.GetGorm(), hello.Room, session.User.Id)
+		if err != nil {
 			return err
 		}
 

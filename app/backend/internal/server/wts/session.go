@@ -210,14 +210,8 @@ func (s *Session) GetRooms() SessionJoinedRooms {
 	return rooms
 }
 
-func (s *Session) GetRoom() *Room {
-
-	if len(s.rooms) > 0 {
-		for _, room := range s.rooms {
-			return room.Room()
-		}
-	}
-	return nil
+func (s *Session) FindRoom(roomName string) *SessionJoinedRoom {
+	return s.rooms[roomName]
 }
 
 func NewSession(

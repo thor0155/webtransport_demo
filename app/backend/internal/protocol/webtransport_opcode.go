@@ -9,6 +9,7 @@ const (
 	RequestTypePing
 	RequestTypeHello
 	RequestTypeChat
+	RequestTypeChatHistory
 )
 
 type ResponseMessageType = wts.MessageType
@@ -23,4 +24,5 @@ const (
 	ResponseTypeJoin
 	ResponseTypeChat
 	ResponseTypeRoomInfo
+	ResponseTypeChatHistory
 )

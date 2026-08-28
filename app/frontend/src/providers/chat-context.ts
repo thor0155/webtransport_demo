@@ -10,7 +10,7 @@ interface ChatContextValue {
 
     disconnect(): void;
 
-    sendChat(message: string): void;
+    sendChat(roomName:string, message: string): void;
 
     clearEvents(): void;
 }

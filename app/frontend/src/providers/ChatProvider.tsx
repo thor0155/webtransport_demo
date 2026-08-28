@@ -132,8 +132,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
         });
     }
 
-    function sendChat(message: string) {
-        service.sendChat(message);
+    function sendChat(roomName: string, message: string) {
+        service.sendChat(roomName, message);
     }
 
     function clearEvents() {

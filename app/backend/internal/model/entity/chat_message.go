@@ -17,12 +17,18 @@ type ChatMessage struct {
 	Content string        `bson:"content"`
 	// Attachments []Attachment        `bson:"attachments,omitempty"`
 	// Reactions   []Reaction          `bson:"reactions,omitempty"`
-	// ReplyToID   *primitive.ObjectID `bson:"reply_to_id,omitempty"`
-	// Mentions    []primitive.ObjectID `bson:"mentions,omitempty"`
+	ReplyToId *bson.ObjectID `bson:"reply_to_id,omitempty"`
+	// Mentions    []bson.ObjectID `bson:"mentions,omitempty"`
 	EditedAt  *time.Time `bson:"edited_at,omitempty"`
 	DeletedAt *time.Time `bson:"deleted_at,omitempty"` // 軟刪除
 	CreatedAt time.Time  `bson:"created_at"`
 }
+
+// type Attachment struct {
+//     URL  string `bson:"url"`
+//     Type string `bson:"type"`
+//     Size int64  `bson:"size"`
+// }
 
 type ChatMessageBucket struct {
 	Id         bson.ObjectID  `bson:"_id,omitempty"`
