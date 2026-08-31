@@ -53,7 +53,7 @@ func (m *mongoDB) Client() *mongo.Client {
 }
 
 func (m *mongoDB) Phase() int {
-	return 1
+	return DatabasePhase
 }
 
 // Init implements [MongoDB].

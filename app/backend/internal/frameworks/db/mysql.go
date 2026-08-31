@@ -33,7 +33,6 @@ const (
 const DSN_FORMAT = "%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=%t&loc=%s&timeout=%s&readTimeout=%s&writeTimeout=%s"
 
 type MysqlDB interface {
-	obj.Activity
 	obj.Component
 	obj.Phaseable
 	Client() *gorm.DB
@@ -53,7 +52,7 @@ func (s *mysqlDB) Active() bool {
 }
 
 func (m *mysqlDB) Phase() int {
-	return 1
+	return DatabasePhase
 }
 
 func (s *mysqlDB) Init() (err error) {

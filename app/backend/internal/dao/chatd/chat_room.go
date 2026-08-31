@@ -1,7 +1,6 @@
 package chatd
 
 import (
-	"api/internal/frameworks/db"
 	"api/internal/frameworks/utils/gormtool"
 	"api/internal/model/entity"
 	"fmt"
@@ -58,7 +57,7 @@ func (c *chatRoomDao) GetUserList(gorm *gorm.DB, room string) ([]*entity.User, e
 	return results, nil
 }
 
-func NewChatRoomDao(mongodb db.MongoDB) ChatRoomDao {
+func NewChatRoomDao() ChatRoomDao {
 	return &chatRoomDao{
 		chatRoomUserInsertIgnoreClause: clause.OnConflict{
 			Columns:   []clause.Column{{Name: "user_id"}, {Name: "chat_room_id"}},

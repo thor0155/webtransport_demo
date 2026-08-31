@@ -114,6 +114,7 @@ require (
 	go.opentelemetry.io/otel v1.44.0 // indirect
 	go.opentelemetry.io/otel/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.23.0 // indirect
@@ -130,6 +131,7 @@ require (
 	github.com/gin-contrib/zap v1.1.7
 	github.com/go-gormigrate/gormigrate/v2 v2.1.6
 	github.com/google/uuid v1.6.0
+	github.com/redis/go-redis/v9 v9.22.0
 	github.com/spf13/cobra v1.10.2
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.44.0
 	go.uber.org/zap v1.28.0

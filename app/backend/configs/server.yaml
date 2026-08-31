@@ -1,5 +1,26 @@
 components:
   db:
+    redis:
+      active: ${DB_REDIS_ACTIVE:true} 
+      mode: ${DB_REDIS_MODE:single} # 可選 "single" / "cluster" / "sentinel"
+      # 通用設定
+      endpoints: 
+      - ${DB_REDIS_ENDPOINTS:redis:6379} 
+      username: ${DB_REDIS_USER:}
+      password: ${DB_REDIS_PASSWORD:} 
+      db: ${DB_REDIS_DB:} # default 0
+      # sentinel 模式專用 
+      masterName: ${DB_REDIS_MASTER_NAME:mymaster} 
+      # 連線池設定 (最佳實務) 
+      maxRetries: ${DB_REDIS_MAX_RETRIES:3} # 最大重試次數 
+      minRetryBackoff: ${DB_REDIS_MIN_RETRY_BACKOFF:8ms} # 最小重試間隔 
+      maxRetryBackoff: ${DB_REDIS_MAX_RETRY_BACKOFF:512ms} # 最大重試間隔 
+      poolSize: ${DB_REDIS_POOL_SIZE:20} # 最大連線池大小 
+      minIdleConns: ${DB_REDIS_MIN_IDLE_CONNS:5} # 最小空閒連線數 
+      connMaxLifetime: ${DB_REDIS_CONN_MAX_LIFETIME:} # 單一連線最長存活時間 e.g. 5m
+      poolTimeout: ${DB_REDIS_POOL_TIMEOUT:30s} # 連線池等待超時 
+      connMaxIdleTime: ${DB_REDIS_CONN_MAX_IDLE_TIME:} # 空閒連線最長存活時間 e.g. 5m
+
     mysql:
       active: ${DB_MYSQL_ACTIVE:true} 
       host: ${DB_MYSQL_HOST:mysql} 
@@ -20,6 +41,7 @@ components:
       timeout: ${DB_MYSQL_TIMEOUT:5s} # 連線超時 
       readTimeout: ${DB_MYSQL_READ_TIMEOUT:10s} # 讀取超時 
       writeTimeout: ${DB_MYSQL_WRITE_TIMEOUT:10s} # 寫入超時
+
     mongodb:
       active: ${DB_MONGODB_ACTIVE:true}
       hosts: 

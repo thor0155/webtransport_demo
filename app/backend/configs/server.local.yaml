@@ -1,5 +1,8 @@
 components:
   db:
+    redis:
+      endpoints: 
+      - ${DB_REDIS_ENDPOINTS:127.0.0.1:6379}
     mysql:
       host: ${DB_MYSQL_HOST:127.0.0.1} 
       dbname: ${DB_MYSQL_DBNAME:test} 

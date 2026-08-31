@@ -9,6 +9,8 @@ import (
 type Objects obj.Objects
 
 var ProvideSet = wire.NewSet(
+	NewRedisConfig,
+	NewRedisDB,
 	NewMysqlConfig,
 	NewMysqlDB,
 	NewMongoConfig,
@@ -16,6 +18,6 @@ var ProvideSet = wire.NewSet(
 	ProvideObjects,
 )
 
-func ProvideObjects(mysqlDB MysqlDB, mongoDB MongoDB) Objects {
-	return Objects{mysqlDB, mongoDB}
+func ProvideObjects(mysqlDB MysqlDB, mongoDB MongoDB, redisDB RedisDB) Objects {
+	return Objects{mysqlDB, mongoDB, redisDB}
 }
