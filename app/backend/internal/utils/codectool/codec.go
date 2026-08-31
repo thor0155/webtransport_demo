@@ -1,4 +1,4 @@
-package utils
+package codectool
 
 import (
 	"github.com/cockroachdb/errors"
