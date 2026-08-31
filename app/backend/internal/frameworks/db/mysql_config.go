@@ -21,6 +21,7 @@ type MySQLConfig struct {
 	Timeout         string `mapstructure:"timeout"`
 	ReadTimeout     string `mapstructure:"readTimeout"`
 	WriteTimeout    string `mapstructure:"writeTimeout"`
+	Debug           bool   `mapstructure:"debug"`
 }
 
 func NewMysqlConfig(configHelper config.ConfigHelper) (*MySQLConfig, error) {

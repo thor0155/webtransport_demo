@@ -112,7 +112,7 @@ func (s *mysqlDB) Init() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if config.IsDebugging() {
+	if config.IsDebugging() || s.cfg.Debug {
 		db = db.Debug()
 	}
 	raw, err := db.DB()
