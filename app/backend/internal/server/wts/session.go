@@ -3,7 +3,7 @@ package wts
 import (
 	"api/internal/frameworks/utils/nettool"
 	"api/internal/model"
-	"api/internal/utils"
+	"api/internal/utils/codectool"
 	"context"
 	"sync"
 	"sync/atomic"
@@ -199,7 +199,7 @@ func (s *Session) ReadMessage(v any) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	return utils.Decode(buf[:n], v)
+	return codectool.Decode(buf[:n], v)
 }
 
 func (s *Session) GetRooms() SessionJoinedRooms {

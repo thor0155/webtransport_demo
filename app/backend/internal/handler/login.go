@@ -8,7 +8,7 @@ import (
 	"api/internal/server/wts"
 	"api/internal/service/auths"
 	"api/internal/service/chats"
-	"api/internal/utils"
+	"api/internal/utils/codectool"
 
 	"github.com/cockroachdb/errors"
 	"go.uber.org/zap"
@@ -75,7 +75,7 @@ func (ctrl *loginController) handleRoomInfo(s *wts.Session) error {
 	}
 	rooms := joinedRooms.ToRooms()
 	payload := rooms.First().Info()
-	data, err := utils.Encode(payload)
+	data, err := codectool.Encode(payload)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (ctrl *loginController) handleRoomInfo(s *wts.Session) error {
 func (ctrl *loginController) handleWelcome(dbCtx *db.Context, s *wts.Session, request []byte) error {
 
 	var hello model.HelloPayload
-	if err := utils.Decode(request, &hello); err != nil {
+	if err := codectool.Decode(request, &hello); err != nil {
 		return err
 	}
 
@@ -106,7 +106,7 @@ func (ctrl *loginController) handleWelcome(dbCtx *db.Context, s *wts.Session, re
 		Session: s.GetId(),
 	}
 
-	data, err := utils.Encode(payload)
+	data, err := codectool.Encode(payload)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (ctrl *loginController) handleWelcome(dbCtx *db.Context, s *wts.Session, re
 
 func (ctrl *loginController) handleJoin(s *wts.Session) error {
 
-	data, err := model.EncodeJoinedMember(s.GetId(), &s.User, true, s.GetConnectedAt())
+	data, err := codectool.EncodeJoinedMember(&s.User, s.GetId(), true, s.GetConnectedAt())
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (ctrl *loginController) handleMembers(ctx *db.Context, s *wts.Session) erro
 		return err
 	}
 
-	data, err := utils.Encode(model.MembersPayload{
+	data, err := codectool.Encode(model.MembersPayload{
 		Members: members,
 	})
 	if err != nil {
