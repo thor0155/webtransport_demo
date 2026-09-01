@@ -13,7 +13,7 @@ import (
 )
 
 type AuthService interface {
-	Login(ctx *db.Context, session *wts.Session, hello model.HelloPayload) (*entity.User, error)
+	Login(ctx *db.Context, session *wts.Session, hello model.HelloRequest) (*entity.User, error)
 }
 
 type authService struct {
@@ -23,7 +23,7 @@ type authService struct {
 }
 
 // Login implements [AuthService].
-func (a *authService) Login(ctx *db.Context, session *wts.Session, hello model.HelloPayload) (*entity.User, error) {
+func (a *authService) Login(ctx *db.Context, session *wts.Session, hello model.HelloRequest) (*entity.User, error) {
 	if a.webtransportHub.AnySessions(func(s *wts.Session) bool {
 		return s.User.Id == hello.Id
 	}) {

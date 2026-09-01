@@ -8,7 +8,7 @@ const (
 	LogLevelError LogLevel = "error"
 )
 
-type LogPayload struct {
+type LogResponse struct {
 	Level   LogLevel `msgpack:"level"`
 	Message string   `msgpack:"message"`
 }

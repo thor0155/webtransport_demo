@@ -85,7 +85,7 @@ func (ctrl *loginController) handleRoomInfo(s *wts.Session) error {
 
 func (ctrl *loginController) handleWelcome(dbCtx *db.Context, s *wts.Session, request []byte) error {
 
-	var hello model.HelloPayload
+	var hello model.HelloRequest
 	if err := codectool.Decode(request, &hello); err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (ctrl *loginController) handleWelcome(dbCtx *db.Context, s *wts.Session, re
 		return err
 	}
 
-	payload := model.WelcomePayload{
+	payload := model.WelcomeResponse{
 		UserId:  s.User.Id,
 		Session: s.GetId(),
 	}
@@ -141,7 +141,7 @@ func (ctrl *loginController) handleMembers(ctx *db.Context, s *wts.Session) erro
 		return err
 	}
 
-	data, err := codectool.Encode(model.MembersPayload{
+	data, err := codectool.Encode(model.Members{
 		Members: members,
 	})
 	if err != nil {

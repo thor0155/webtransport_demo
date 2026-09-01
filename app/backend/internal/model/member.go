@@ -10,7 +10,7 @@ type Member struct {
 	JoinedAt int64  `msgpack:"joinedAt"`
 }
 
-type MembersPayload struct {
+type Members struct {
 	Members []*Member `msgpack:"members"`
 }
 

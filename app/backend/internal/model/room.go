@@ -1,15 +1,15 @@
 package model
 
-type JoinPayload struct {
+type JoinResponse struct {
 	Member
 }
 
-type LeavePayload struct {
+type LeaveResponse struct {
 	UserId  string `msgpack:"userId"`
 	Session string `msgpack:"session"`
 }
 
-type RoomInfoPayload struct {
+type RoomInfoResponse struct {
 	Room        string `msgpack:"room"`
 	MemberCount int    `msgpack:"memberCount"`
 	MaxMembers  int    `msgpack:"maxMembers"`

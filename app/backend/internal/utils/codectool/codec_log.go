@@ -5,7 +5,7 @@ import (
 )
 
 func EncodeLogPayload(level model.LogLevel, message string) ([]byte, error) {
-	result := model.LogPayload{
+	result := model.LogResponse{
 		Level:   level,
 		Message: message,
 	}

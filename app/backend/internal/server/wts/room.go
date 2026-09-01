@@ -38,10 +38,10 @@ func NewRoom(name string, maxMembers int, logger *zap.Logger) *Room {
 	}
 }
 
-func (r *Room) Info() *model.RoomInfoPayload {
+func (r *Room) Info() *model.RoomInfoResponse {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return &model.RoomInfoPayload{
+	return &model.RoomInfoResponse{
 		Room:        r.name,
 		MemberCount: len(r.members),
 		MaxMembers:  r.maxMembers,

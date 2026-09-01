@@ -7,7 +7,7 @@ import (
 
 func EncodeJoinedMember(user *model.User, sessionId string, online bool, joinedAt time.Time) ([]byte, error) {
 
-	m := model.JoinPayload{
+	m := model.JoinResponse{
 		Member: model.NewMember(sessionId, user, online, joinedAt),
 	}
 	b, err := Encode(m)
@@ -19,7 +19,7 @@ func EncodeJoinedMember(user *model.User, sessionId string, online bool, joinedA
 }
 
 func EncodeLeavedMember(sessionId, userId string) ([]byte, error) {
-	m := model.LeavePayload{
+	m := model.LeaveResponse{
 		UserId:  userId,
 		Session: sessionId,
 	}
