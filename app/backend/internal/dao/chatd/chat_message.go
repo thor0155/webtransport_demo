@@ -4,7 +4,6 @@ import (
 	"api/internal/frameworks/db"
 	"api/internal/frameworks/obj"
 	"api/internal/frameworks/utils/mongotool"
-	"api/internal/model"
 	"api/internal/model/entity"
 	"context"
 	"time"
@@ -22,7 +21,19 @@ const (
 type ChatMessageDao interface {
 	obj.Component
 	AppendMessage(ctx context.Context, msg *entity.ChatMessage) error
-	GetRecentMessages(ctx context.Context, roomId uint, limit int, cursor *model.ChatCursor) ([]*entity.ChatMessage, *model.ChatCursor, error)
+	GetHistory(ctx context.Context, roomId uint, limit int, cursor *HistoryCursor) (*HistoryResult, error)
+}
+
+// HistoryCursor 代表「上一頁讀到的最後一則訊息的位置」
+// 前端把它原樣存起來,下一頁請求時帶回來即可,不需要理解內部結構
+type HistoryCursor struct {
+	BucketSeq int64         `json:"bucket_seq"`
+	MsgId     bson.ObjectID `json:"msg_id"`
+}
+
+type HistoryResult struct {
+	Messages   []*entity.ChatMessage
+	NextCursor *HistoryCursor // nil 代表沒有更多歷史了
 }
 
 type chatMessageDao struct {
@@ -52,6 +63,9 @@ func (c *chatMessageDao) Name() string {
 }
 
 func (c *chatMessageDao) AppendMessage(ctx context.Context, msg *entity.ChatMessage) error {
+	if msg.Id.IsZero() {
+		return errors.New("message id is zero")
+	}
 	filter := bson.D{
 		{Key: "room_id", Value: msg.RoomId},
 		{Key: "is_full", Value: bson.D{{Key: mongotool.OperatorNe, Value: true}}},
@@ -84,13 +98,14 @@ func (c *chatMessageDao) AppendMessage(ctx context.Context, msg *entity.ChatMess
 	return nil
 }
 
-func (c *chatMessageDao) GetRecentMessages(ctx context.Context, roomId uint, limit int, cursor *model.ChatCursor) ([]*entity.ChatMessage, *model.ChatCursor, error) {
+func (c *chatMessageDao) GetHistory(ctx context.Context, roomId uint, limit int, cursor *HistoryCursor) (*HistoryResult, error) {
 	filter := bson.D{{Key: "room_id", Value: roomId}}
 	if cursor != nil {
 		filter = append(filter, bson.E{Key: "bucket_seq", Value: bson.D{{Key: mongotool.OperatorLte, Value: cursor.BucketSeq}}})
 	}
 
-	// 抓比需要多一點的 bucket 數,避免最後一頁不足 limit
+	// Fetch from multiple buckets at once to avoid having to perform a second query
+	// if a single bucket is insufficient to meet the limit.
 	estBuckets := limit/BucketMaxCount + 2
 	opts := options.Find().
 		SetSort(mongotool.NewSortBuilder().Add("bucket_seq", mongotool.DESC).Build()).
@@ -98,48 +113,67 @@ func (c *chatMessageDao) GetRecentMessages(ctx context.Context, roomId uint, lim
 
 	cur, err := c.chatMessageBucketCollection.Find(ctx, filter, opts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer cur.Close(ctx)
 
 	var result []*entity.ChatMessage
-	var nextCursor *model.ChatCursor
-	skipUntilCursor := cursor != nil
+	var nextCursor *HistoryCursor
+	var lastProcessedBucketSeq int64 // Remember which bucket the process was last processed in, so you don't have to look it up later.
+	skipDone := cursor == nil
 
 	for cur.Next(ctx) {
 		var bucket entity.ChatMessageBucket
 		if err := cur.Decode(&bucket); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
+		lastProcessedBucketSeq = bucket.BucketSeq
 
 		msgs := bucket.Messages
 		startIdx := len(msgs) - 1
 
-		// 如果這是 cursor 指向的那個 bucket,要跳過已經讀過的部分
-		if skipUntilCursor && bucket.BucketSeq == cursor.BucketSeq {
+		if !skipDone && bucket.BucketSeq == cursor.BucketSeq {
 			for i, m := range msgs {
 				if m.Id == cursor.MsgId {
 					startIdx = i - 1
 					break
 				}
 			}
-			skipUntilCursor = false
+			skipDone = true
 		}
 
-		for i := startIdx; i >= 0 && len(result) < limit; i-- {
+		for i := startIdx; i >= 0; i-- {
 			if msgs[i].DeletedAt != nil {
 				continue
 			}
 			result = append(result, msgs[i])
+			if len(result) >= limit {
+				if i > 0 {
+					// There's still some data left in the bucket; the cursor is pointing to the next message to read.
+					nextCursor = &HistoryCursor{BucketSeq: bucket.BucketSeq, MsgId: msgs[i-1].Id}
+				}
+				break
+			}
 		}
-
 		if len(result) >= limit {
-			nextCursor = &model.ChatCursor{BucketSeq: bucket.BucketSeq, MsgId: msgs[startIdx-len(result)+1].Id}
 			break
 		}
 	}
 
-	return result, nextCursor, nil
+	// The bucket limit was just reached at the bucket boundary (all messages in this bucket were used up, but the nextCursor wasn't set).
+	// It needs to be checked whether there are any older buckets later on.
+	if len(result) >= limit && nextCursor == nil && len(result) > 0 {
+		exists, err := c.hasEarlierBucket(ctx, roomId, lastProcessedBucketSeq)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			lastMsg := result[len(result)-1]
+			nextCursor = &HistoryCursor{BucketSeq: lastProcessedBucketSeq, MsgId: lastMsg.Id}
+		}
+	}
+
+	return &HistoryResult{Messages: result, NextCursor: nextCursor}, nil
 }
 
 func NewChatMessageDao(mongodb db.MongoDB) ChatMessageDao {
@@ -160,6 +194,17 @@ func (c *chatMessageDao) createBucket(ctx context.Context, roomId uint, msg *ent
 	}
 	_, err := c.chatMessageBucketCollection.InsertOne(ctx, bucket)
 	// 極端 race 下兩個請求同時判斷「沒有未滿 bucket」而各自嘗試新建,
-	// 可加 unique index {channel_id, bucket_seq} 搭配重試邏輯處理衝突
+	// 可加 unique index {room_id, bucket_seq} 搭配重試邏輯處理衝突
 	return errors.WithStack(err)
+}
+
+func (c *chatMessageDao) hasEarlierBucket(ctx context.Context, roomId uint, currentSeq int64) (bool, error) {
+	count, err := c.chatMessageBucketCollection.CountDocuments(ctx,
+		bson.D{
+			{Key: "room_id", Value: roomId},
+			{Key: "bucket_seq", Value: bson.D{{Key: mongotool.OperatorLt, Value: currentSeq}}},
+		},
+		options.Count().SetLimit(1),
+	)
+	return count > 0, err
 }

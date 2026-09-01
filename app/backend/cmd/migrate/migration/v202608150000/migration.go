@@ -1,6 +1,7 @@
 package v202608150000
 
 import (
+	"api/internal/frameworks/utils/mongotool"
 	"api/internal/model/entity"
 	"context"
 
@@ -37,15 +38,16 @@ var MongoMigration migrate.Migration = migrate.Migration{
 		coll := db.Collection(entity.TableNameChatMessageBucket)
 		_, err := coll.Indexes().CreateMany(ctx, []mongo.IndexModel{
 			{
-				Keys:    bson.D{{Key: "room_id", Value: 1}, {Key: "bucket_seq", Value: -1}},
+				Keys:    bson.D{{Key: "room_id", Value: mongotool.ASC}, {Key: "bucket_seq", Value: mongotool.DESC}},
 				Options: options.Index().SetUnique(true),
 			},
-			{Keys: bson.D{{Key: "messages._id", Value: 1}}},
+			{Keys: bson.D{{Key: "messages._id", Value: mongotool.ASC}}},
 			{
 				// 加速「找出目前未滿的 bucket」這個寫入路徑的查詢
 				Keys: bson.D{
-					{Key: "room_id", Value: 1}, {Key: "is_full", Value: 1}, {Key: "bucket_seq", Value: -1}},
+					{Key: "room_id", Value: mongotool.ASC}, {Key: "is_full", Value: mongotool.ASC}, {Key: "bucket_seq", Value: mongotool.DESC}},
 			},
+			{Keys: bson.D{{Key: "messages.reply_to_id", Value: mongotool.DESC}}},
 		})
 		return err
 	},

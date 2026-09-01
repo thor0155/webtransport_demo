@@ -12,7 +12,7 @@ func EncodeChatMessage(user *model.User, messageId string, text string, createdA
 		SenderId:   user.Id,
 		SenderName: user.Name,
 		Text:       text,
-		Timestamp:  createdAt.Unix(),
+		Timestamp:  createdAt.UnixMilli(),
 	}
 
 	b, err := Encode(result)

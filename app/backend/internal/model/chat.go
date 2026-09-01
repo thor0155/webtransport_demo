@@ -1,10 +1,5 @@
 package model
 
-import (
-	"api/internal/utils"
-	"time"
-)
-
 type ChatMessage struct {
 	Id         string `msgpack:"id"`
 	SenderName string `msgpack:"senderName"`
@@ -25,7 +20,7 @@ type ChatCursor struct {
 }
 
 type ChatHistoryRequest struct {
-	RoomId string      `msgpack:"roomId"`
+	Room   string      `msgpack:"room"`
 	Cursor *ChatCursor `msgpack:"cursor"` // 第一次請求不帶,之後每次帶上一次回應的游標
 	Limit  int         `msgpack:"limit"`  // 預設 50
 }
@@ -33,22 +28,4 @@ type ChatHistoryRequest struct {
 type ChatHistoryResponse struct {
 	Messages   []ChatMessage `msgpack:"messages"`
 	NextCursor *ChatCursor   `msgpack:"nextCursor"`
-	Error      string        `msgpack:"error"`
-}
-
-func EncodeChatMessage(messageId string, user *User, text string, createdAt time.Time) ([]byte, error) {
-
-	result := ChatMessage{
-		Id:         messageId,
-		SenderId:   user.Id,
-		SenderName: user.Name,
-		Text:       text,
-		Timestamp:  createdAt.Unix(),
-	}
-
-	b, err := utils.Encode(result)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
 }

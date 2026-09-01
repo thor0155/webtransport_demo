@@ -20,6 +20,8 @@ components:
       timeout: ${DB_MYSQL_TIMEOUT:5s} # 連線超時 
       readTimeout: ${DB_MYSQL_READ_TIMEOUT:10s} # 讀取超時 
       writeTimeout: ${DB_MYSQL_WRITE_TIMEOUT:10s} # 寫入超時
+      debug: ${DB_MYSQL_DEBUG:}
+      
     mongodb:
       active: ${DB_MONGODB_ACTIVE:true}
       hosts: 

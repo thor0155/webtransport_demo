@@ -7,6 +7,8 @@ import (
 	"api/internal/model"
 	"api/internal/model/entity"
 	"api/internal/server/wts"
+	"api/internal/service/users"
+	"api/internal/utils/convtool"
 	"context"
 	"runtime"
 	"time"
@@ -20,6 +22,7 @@ import (
 type ChatService interface {
 	GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.Member, error)
 	WriteMessage(ctx context.Context, roomName string, userId string, message string) (ResultOfWriteMessage, error)
+	GetHistory(ctx context.Context, request *model.ChatHistoryRequest) (model.ChatHistoryResponse, error)
 }
 
 type chatService struct {
@@ -28,6 +31,7 @@ type chatService struct {
 	chatRoomDao               chatd.ChatRoomDao
 	workTracker               obj.WorkTracker
 	writeChatMessageCoroutine *ants.Pool
+	userNameResolver          users.NameResolver
 }
 
 func (c *chatService) GetMemberList(ctx *db.Context, room *wts.Room) ([]*model.Member, error) {
@@ -77,13 +81,54 @@ func (c *chatService) WriteMessage(ctx context.Context, roomName string, userId 
 	return ResultOfWriteMessage{MessageId: messageId, CreatedAt: createdAt}, nil
 }
 
-func NewChatService(logger *zap.Logger, chatRoomDao chatd.ChatRoomDao, chatMessageDao chatd.ChatMessageDao, workTracker obj.WorkTracker) (ChatService, error) {
+func (s *chatService) GetHistory(ctx context.Context, request *model.ChatHistoryRequest) (model.ChatHistoryResponse, error) {
+
+	limit := request.Limit
+	if limit <= 0 {
+		limit = DefaultHistoryCount
+	} else if limit > MaxHistoryCount {
+		limit = MaxHistoryCount
+	}
+
+	room, err := s.chatRoomDao.GetRoom(request.Room)
+	if err != nil {
+		return model.ChatHistoryResponse{}, err
+	}
+
+	var cursor *chatd.HistoryCursor
+	if request.Cursor != nil {
+		var err error
+		if cursor, err = convtool.ConvChatDaoHistroyCursor(request.Cursor); err != nil {
+			return model.ChatHistoryResponse{}, err
+		}
+	}
+
+	page, err := s.chatMessageDao.GetHistory(ctx, room.Id, limit, cursor)
+	if err != nil {
+		return model.ChatHistoryResponse{}, err
+	}
+
+	userIds := make([]string, 0, len(page.Messages))
+	for _, m := range page.Messages {
+		userIds = append(userIds, m.UserId)
+	}
+
+	nameMap, err := s.userNameResolver.ResolveNames(ctx, userIds...)
+	if err != nil {
+		return model.ChatHistoryResponse{}, err
+	}
+
+	return convtool.ConvChatHistoryResponse(page, nameMap), nil
+}
+
+func NewChatService(logger *zap.Logger, chatRoomDao chatd.ChatRoomDao, chatMessageDao chatd.ChatMessageDao, workTracker obj.WorkTracker, userNameResolver users.NameResolver) (ChatService, error) {
 	name := "chat_service"
 	svc := &chatService{
-		workTracker:    workTracker,
-		chatRoomDao:    chatRoomDao,
-		chatMessageDao: chatMessageDao,
-		logger:         logger.Named(name),
+		workTracker:      workTracker,
+		chatRoomDao:      chatRoomDao,
+		chatMessageDao:   chatMessageDao,
+		userNameResolver: userNameResolver,
+		logger:           logger.Named(name),
 	}
 	var err error
 	if svc.writeChatMessageCoroutine, err = ants.NewPool(runtime.NumCPU(), ants.WithMaxBlockingTasks(10000)); err != nil {

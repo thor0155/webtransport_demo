@@ -65,7 +65,7 @@ func TestAppendMessage(t *testing.T) {
 func TestGetRecentMessages_Pagination(t *testing.T) {
 
 	ctx := context.Background()
-	var roomId uint = 1
+	var roomId uint = uint(time.Now().UnixNano())
 
 	// 塞 150 則,跨 2 個 bucket
 	for i := 0; i < 150; i++ {
@@ -76,21 +76,21 @@ func TestGetRecentMessages_Pagination(t *testing.T) {
 	}
 
 	// 第一頁
-	page1, cursor, err := test.chatMessageDao.GetRecentMessages(ctx, roomId, 50, nil)
+	page1, err := test.chatMessageDao.GetHistory(ctx, roomId, 50, nil)
 	require.NoError(t, err)
-	require.Len(t, page1, 50)
-	assert.Equal(t, "msg-149", page1[0].Content) // 最新的在最前面
-	require.NotNil(t, cursor)
+	require.Len(t, page1.Messages, 50)
+	assert.Equal(t, "msg-149", page1.Messages[0].Content) // 最新的在最前面
+	require.NotNil(t, page1.NextCursor)
 
 	// 第二頁,用第一頁回傳的 cursor
-	page2, _, err := test.chatMessageDao.GetRecentMessages(ctx, roomId, 50, cursor)
+	page2, err := test.chatMessageDao.GetHistory(ctx, roomId, 50, page1.NextCursor)
 	require.NoError(t, err)
-	require.Len(t, page2, 50)
-	assert.Equal(t, "msg-99", page2[0].Content)
+	require.Len(t, page2.Messages, 50)
+	assert.Equal(t, "msg-99", page2.Messages[0].Content)
 
 	// 確認兩頁沒有重複、沒有遺漏
 	seen := map[string]bool{}
-	for _, m := range append(page1, page2...) {
+	for _, m := range append(page1.Messages, page2.Messages...) {
 		assert.False(t, seen[m.Content], "duplicate message across pages: %s", m.Content)
 		seen[m.Content] = true
 	}

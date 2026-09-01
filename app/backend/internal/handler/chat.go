@@ -8,7 +8,7 @@ import (
 	"api/internal/server/wts"
 	"api/internal/service/auths"
 	"api/internal/service/chats"
-	"api/internal/utils"
+	"api/internal/utils/codectool"
 	"context"
 
 	"github.com/cockroachdb/errors"
@@ -19,14 +19,17 @@ type chatController struct {
 	logger      *zap.Logger
 	chatService chats.ChatService
 	mysql       db.MysqlDB
+	redis       db.RedisDB
 }
 
 func NewChatController(
-	logger *zap.Logger, authService auths.AuthService, chatService chats.ChatService, mysql db.MysqlDB) *chatController {
+	logger *zap.Logger, authService auths.AuthService, chatService chats.ChatService,
+	mysql db.MysqlDB, redis db.RedisDB) *chatController {
 	return &chatController{
 		logger:      logger.Named("chat-controller"),
 		chatService: chatService,
 		mysql:       mysql,
+		redis:       redis,
 	}
 }
 
@@ -34,25 +37,37 @@ func (c *chatController) Register(registry *wts.MessageHandlerRegistry) {
 	registry.OnDisconnected(c.leave)
 	registry.OnRequest(protocol.RequestTypeChat, middleware.WebtransportErrorReply, c.handleChat)
 	registry.OnRequest(protocol.RequestTypePing, c.handlePing)
-	registry.OnRequest(protocol.RequestTypeChatHistory, c.handleHistory)
+	registry.OnRequest(protocol.RequestTypeChatHistory, middleware.WebtransportErrorReply, c.handleGetHistory)
 
 }
 
-func (c *chatController) handleHistory(ctx wts.Context) error {
-	session := ctx.GetSession()
+func (c *chatController) handleGetHistory(ctx wts.Context) error {
+
 	requestPayload := ctx.GetPayload()
 
-	// TODO: get history logic
-	_ = requestPayload
-	responsePayload := []byte{}
+	var request model.ChatHistoryRequest
+	if err := codectool.Decode(requestPayload, &request); err != nil {
+		return err
+	}
 
-	return session.SendMessage(protocol.ResponseTypeChatHistory, responsePayload)
+	dbCtx := db.NewContext(ctx).WithRedis(c.redis.Client()).WithGorm(c.mysql.Session())
+
+	response, err := c.chatService.GetHistory(dbCtx, &request)
+	if err != nil {
+		return err
+	}
+
+	if responsePayload, err := codectool.Encode(response); err != nil {
+		return err
+	} else {
+		return ctx.GetSession().SendMessage(protocol.ResponseTypeChatHistory, responsePayload)
+	}
 }
 
 func (c *chatController) leave(ctx context.Context, hub *wts.Hub, session *wts.Session) error {
 
 	// who leaved
-	data, err := model.EncodeLeavedMember(session.GetId(), session.User.Id)
+	data, err := codectool.EncodeLeavedMember(session.GetId(), session.User.Id)
 	if err != nil {
 		return err
 	}
@@ -66,7 +81,7 @@ func (c *chatController) leave(ctx context.Context, hub *wts.Hub, session *wts.S
 
 	for _, room := range rooms {
 		room.Leave(session)
-		data, err = utils.Encode(room.Info())
+		data, err = codectool.Encode(room.Info())
 		if err != nil {
 			return err
 		}
@@ -79,7 +94,7 @@ func (c *chatController) leave(ctx context.Context, hub *wts.Hub, session *wts.S
 func (c *chatController) handleChat(ctx wts.Context) error {
 
 	var request model.ChatMessageRequest
-	if err := utils.Decode(ctx.GetPayload(), &request); err != nil {
+	if err := codectool.Decode(ctx.GetPayload(), &request); err != nil {
 		return err
 	}
 
@@ -97,7 +112,7 @@ func (c *chatController) handleChat(ctx wts.Context) error {
 		return err
 	}
 
-	b, err := model.EncodeChatMessage(result.MessageId.Hex(), &session.User, request.Text, result.CreatedAt)
+	b, err := codectool.EncodeChatMessage(&session.User, result.MessageId.Hex(), request.Text, result.CreatedAt)
 	if err != nil {
 		return err
 	}

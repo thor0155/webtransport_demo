@@ -12,6 +12,7 @@ import (
 )
 
 type ChatRoomDao interface {
+	// This currently provides a cache after the log-in.
 	GetRoom(roomName string) (*entity.ChatRoom, error)
 	GetUserList(gorm *gorm.DB, room string) ([]*entity.User, error)
 	CreateRoomAndUserList(gorm *gorm.DB, room string, userId string) (*entity.ChatRoom, error)
