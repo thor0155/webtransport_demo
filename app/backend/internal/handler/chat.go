@@ -2,6 +2,7 @@ package handler
 
 import (
 	"api/internal/frameworks/db"
+	"api/internal/frameworks/errorx"
 	"api/internal/middleware"
 	"api/internal/model"
 	"api/internal/protocol"
@@ -47,18 +48,28 @@ func (c *chatController) handleGetHistory(ctx wts.Context) error {
 
 	var request model.ChatHistoryRequest
 	if err := codectool.Decode(requestPayload, &request); err != nil {
-		return err
+		return errorx.WithCode(err, protocol.ErrorCodeGetHistoryFailure)
+	}
+	if request.Room == "" {
+		return errorx.NewCodeError(protocol.ErrorCodeGetHistoryFailure, "room is empty")
 	}
 
 	dbCtx := db.NewContext(ctx).WithRedis(c.redis.Client()).WithGorm(c.mysql.Session())
 
 	response, err := c.chatService.GetHistory(dbCtx, &request)
 	if err != nil {
-		return err
+		return errorx.WithCode(err, protocol.ErrorCodeGetHistoryFailure)
 	}
 
+	c.logger.Debug("handleGetHistory",
+		zap.String("room", request.Room),
+		zap.Int("limit", request.Limit),
+		zap.Any("cursor", request.Cursor),
+		zap.Int("messageCount", len(response.Messages)),
+		zap.Any("nextCursor", response.NextCursor))
+
 	if responsePayload, err := codectool.Encode(response); err != nil {
-		return err
+		return errorx.WithCode(err, protocol.ErrorCodeGetHistoryFailure)
 	} else {
 		return ctx.GetSession().SendMessage(protocol.ResponseTypeChatHistory, responsePayload)
 	}

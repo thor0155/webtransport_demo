@@ -38,7 +38,7 @@ func (ctrl *loginController) Register(registry *wts.MessageHandlerRegistry) {
 func (ctrl *loginController) handshake(ctx wts.Context) error {
 
 	if ctx.GetType() != protocol.RequestTypeHello {
-		return wts.WithErrorTerminates(errors.New("first message must be hello"))
+		return wts.WithErrorTerminates(errors.Newf("first message must be hello. not type %d", ctx.GetType()))
 	}
 
 	session := ctx.GetSession()

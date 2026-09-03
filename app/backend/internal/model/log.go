@@ -8,7 +8,10 @@ const (
 	LogLevelError LogLevel = "error"
 )
 
+type LogCode = string
+
 type LogResponse struct {
 	Level   LogLevel `msgpack:"level"`
+	Code    LogCode  `msgpack:"code"`
 	Message string   `msgpack:"message"`
 }
