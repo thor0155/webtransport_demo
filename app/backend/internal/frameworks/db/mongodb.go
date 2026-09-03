@@ -114,6 +114,12 @@ func (m *mongoDB) Init() error {
 		return errors.WithStack(err)
 	}
 
+	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := m.client.Ping(pingCtx, readpref.Primary()); err != nil {
+		return errors.WithStack(err)
+	}
+
 	m.defaultDatabase = m.client.Database(m.cfg.DbName)
 
 	m.logger.With(zap.Namespace("connect")).Debug("init", utils.ObjectToZapFields(m.cfg)...)
