@@ -76,7 +76,7 @@ func (h *Handler) handleReadLoop(s *Session) SessionReadHandlerFunc {
 				if errors.HasType(err, (*errorTerminates)(nil)) {
 					return err
 				} else {
-					h.logger.Error("handler error", zap.Uint8("type", header.Type), zap.Error(err))
+					h.logger.Error("handler error", zap.Uint8("request-type", header.Type), zap.Error(err))
 				}
 			}
 			return nil
@@ -98,7 +98,7 @@ func (h *Handler) handleConnect(s *Session) error {
 		if errors.HasType(err, (*errorTerminates)(nil)) {
 			return err
 		} else {
-			h.logger.Error("connecting error", zap.Uint8("type", header.Type), zap.Error(err))
+			h.logger.Error("connecting error", zap.Uint8("request-type", header.Type), zap.Error(err))
 		}
 	}
 	return nil

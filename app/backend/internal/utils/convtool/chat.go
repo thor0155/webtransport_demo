@@ -38,8 +38,11 @@ func ConvChatHistoryResponse(result *chatd.HistoryResult, nameMap map[types.User
 			Timestamp:  m.CreatedAt.UnixMilli(),
 		})
 	}
-	return model.ChatHistoryResponse{
-		Messages:   messagesDto,
-		NextCursor: ConvChatDtoHistoryCursor(result.NextCursor),
+	response := model.ChatHistoryResponse{
+		Messages: messagesDto,
 	}
+	if result.NextCursor != nil {
+		response.NextCursor = ConvChatDtoHistoryCursor(result.NextCursor)
+	}
+	return response
 }

@@ -20,6 +20,7 @@ const (
 
 type NameResolver interface {
 	ResolveNames(ctx context.Context, userIds ...string) (map[types.UserId]types.UserName, error)
+	// Invalidate Call this function when a user changes their name, clear the old cache, and ensure the next query retrieves the new name from the database.
 	Invalidate(ctx context.Context, userId string) error
 }
 
@@ -39,13 +40,15 @@ func (r *redisNameResolver) ResolveNames(ctx context.Context, userIds ...string)
 	gorm := db.GetGorm(ctx)
 	redisClient := db.GetRedis(ctx)
 
+	r.logger.Debug("resolve names parameters", zap.Strings("userIds", userIds))
+
 	result := make(map[string]string, len(userIds))
 	keys := make([]string, len(userIds))
 	for i, id := range userIds {
 		keys[i] = r.fetchKey(id)
 	}
 
-	// 一次 MGET 批次拿,而不是逐筆 GET
+	// Get data in batches using [MGET], instead of getting data one transaction at a time.
 	values, err := redisClient.MGet(ctx, keys...).Result()
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -69,26 +72,26 @@ func (r *redisNameResolver) ResolveNames(ctx context.Context, userIds ...string)
 		return result, nil
 	}
 
+	r.logger.Debug("resolve names missing", zap.Strings("userIds", missing))
+
 	fetched, err := r.userDao.GetNameMapByIds(gorm, missing)
 	if err != nil {
 		return result, errors.WithStack(err)
 	}
 
-	// 批次寫回 Redis,用 pipeline 減少往返次數
 	pipe := redisClient.Pipeline()
 	for id, name := range fetched {
 		result[id] = name
 		pipe.Set(ctx, r.fetchKey(id), name, cachetime.WithJitter(nameCacheBaseTTL, nameCacheJitter))
 	}
 	if _, err := pipe.Exec(ctx); err != nil {
-		// 寫快取失敗不該讓整個查詢失敗,查到的名稱還是要回傳,只是下次快取沒命中
-		// 記 log 即可
+		// A failure to write to the cache shouldn't cause the entire query to fail;
+		// the retrieved name should still be returned, it just won't be found in the next cache cache.
 		r.logger.Error("write name cache failed", zap.Error(err))
 	}
 	return result, nil
 }
 
-// Invalidate 在使用者改名時呼叫,清掉舊快取,讓下次查詢重新從 DB 取得新名稱
 func (r *redisNameResolver) Invalidate(ctx context.Context, userId string) error {
 	return db.GetRedis(ctx).Del(ctx, r.fetchKey(userId)).Err()
 }

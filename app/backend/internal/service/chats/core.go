@@ -4,6 +4,7 @@ import (
 	"api/internal/dao/chatd"
 	"api/internal/frameworks/db"
 	"api/internal/frameworks/obj"
+	"api/internal/frameworks/utils/slicetool"
 	"api/internal/model"
 	"api/internal/model/entity"
 	"api/internal/server/wts"
@@ -108,10 +109,9 @@ func (s *chatService) GetHistory(ctx context.Context, request *model.ChatHistory
 		return model.ChatHistoryResponse{}, err
 	}
 
-	userIds := make([]string, 0, len(page.Messages))
-	for _, m := range page.Messages {
-		userIds = append(userIds, m.UserId)
-	}
+	userIds := slicetool.MapUnique(page.Messages, func(m *entity.ChatMessage) string {
+		return m.UserId
+	})
 
 	nameMap, err := s.userNameResolver.ResolveNames(ctx, userIds...)
 	if err != nil {
