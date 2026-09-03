@@ -18,3 +18,9 @@ tasks:
     dir: "{{.FRONTEND_DIR}}"
     cmds:
       - npm run build
+
+  format:
+    desc: Format frontend code
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - npm run format
