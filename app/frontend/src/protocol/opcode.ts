@@ -3,6 +3,7 @@ export const RequestMessageType = {
     Ping: 1,
     Hello: 2,
     Chat: 3,
+    ChatHistory: 4,
 } as const;
 
 export const ResponseMessageType = {
@@ -15,6 +16,7 @@ export const ResponseMessageType = {
     Join: 6,
     Chat: 7,
     RoomInfo: 8,
+    ChatHistory: 9,
 } as const;
 
 export type MessageType = number;

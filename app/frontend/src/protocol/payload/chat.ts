@@ -1,4 +1,4 @@
-export interface ChatPayload {
+export interface ChatMessage {
     id: string;
     senderId: string;
     senderName: string;
@@ -6,7 +6,23 @@ export interface ChatPayload {
     timestamp: number;
 }
 
-export interface ChatRequestPayload {
+export interface ChatMessageRequest {
     room: string;
     text: string;
+}
+
+export interface ChatCursor {
+    bucketSeq: number;
+    msgId: string;
+}
+
+export interface ChatHistoryRequest {
+    room: string;
+    cursor: ChatCursor | null;
+    limit: number;
+}
+
+export interface ChatHistoryResponse {
+    messages: ChatMessage[];
+    nextCursor: ChatCursor | null;
 }

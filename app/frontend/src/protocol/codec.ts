@@ -1,6 +1,6 @@
 import { encode, decode } from "@msgpack/msgpack";
 import { HEADER_SIZE, MAGIC, VERSION, type Header } from "./header";
-import type { MessageType } from "./scheme";
+import type { MessageType } from "./opcode";
 import { FrameFlags } from "./flags";
 import type { Frame } from "./frame";
 

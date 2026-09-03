@@ -3,7 +3,7 @@ import {
     RequestMessageType,
     type RequestType,
     ResponseMessageType,
-} from "@/protocol/scheme";
+} from "@/protocol/opcode";
 
 import { type Frame } from "@/protocol/frame";
 
@@ -11,7 +11,13 @@ import { encodePayload, decodePayload, encodeFrame } from "@/protocol/codec";
 
 import type { HelloPayload, WelcomePayload } from "@/protocol/payload/connection";
 
-import type { ChatPayload, ChatRequestPayload } from "@/protocol/payload/chat";
+import type {
+    ChatCursor,
+    ChatHistoryRequest,
+    ChatHistoryResponse,
+    ChatMessage,
+    ChatMessageRequest,
+} from "@/protocol/payload/chat";
 
 import type {
     MembersPayload,
@@ -44,6 +50,7 @@ export class ChatService {
         [ResponseMessageType.Join, this.handleJoin.bind(this)],
         [ResponseMessageType.Leave, this.handleLeave.bind(this)],
         [ResponseMessageType.Chat, this.handleChat.bind(this)],
+        [ResponseMessageType.ChatHistory, this.handleChatHistory.bind(this)],
         [ResponseMessageType.Pong, () => this.handlePong()],
         [ResponseMessageType.RoomInfo, this.handleRoomInfo.bind(this)],
         [ResponseMessageType.Log, this.handleLog.bind(this)],
@@ -93,8 +100,17 @@ export class ChatService {
         }
     }
 
+    sendGetHistory(room: string, cursor: ChatCursor | null, limit = 50) {
+        const payload: ChatHistoryRequest = {
+            room,
+            cursor,
+            limit,
+        };
+        this.send(RequestMessageType.ChatHistory, payload);
+    }
+
     sendChat(roomName: string, message: string) {
-        const payload: ChatRequestPayload = {
+        const payload: ChatMessageRequest = {
             text: message,
             room: roomName,
         };
@@ -141,7 +157,7 @@ export class ChatService {
 
     private handleLog(frame: Frame) {
         const payload = decodePayload<LogPayload>(frame.payload);
-        this.notify((listener) => listener.onLog?.(payload.level, payload.message));
+        this.notify((listener) => listener.onLog?.(payload.level, payload.code, payload.message));
     }
 
     private handleWelcome(frame: Frame) {
@@ -170,7 +186,7 @@ export class ChatService {
     }
 
     private handleChat(frame: Frame) {
-        const payload = decodePayload<ChatPayload>(frame.payload);
+        const payload = decodePayload<ChatMessage>(frame.payload);
 
         this.notify((listener) => listener.onChat?.(payload));
     }
@@ -207,8 +223,13 @@ export class ChatService {
         }
     }
 
+    private handleChatHistory(frame: Frame) {
+        const payload = decodePayload<ChatHistoryResponse>(frame.payload);
+        this.notify((listener) => listener.onChatHistory?.(payload));
+    }
+
     private notifyError(message: string) {
-        this.notify((listener) => listener.onLog?.("error", message));
+        this.notify((listener) => listener.onLog?.("error", "", message));
     }
 
     private send<T>(type: RequestType, payload?: T): void {

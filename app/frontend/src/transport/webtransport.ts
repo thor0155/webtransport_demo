@@ -117,7 +117,7 @@ export class WebTransportClient implements Transport {
             try {
                 await this.writer.write(data);
             } catch (err) {
-                console.debug("writer closed", err);
+                console.error("writer closed", err);
                 break;
             }
         }

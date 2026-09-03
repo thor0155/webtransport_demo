@@ -23,3 +23,14 @@
 
     font-size: var(--font-md);
 }
+
+.top-sentinel {
+    height: 1px;
+}
+
+.message-status {
+    text-align: center;
+    padding: var(--space-2);
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+}

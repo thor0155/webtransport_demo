@@ -1,4 +1,4 @@
-import type { MessageType } from "./scheme";
+import type { MessageType } from "./opcode";
 
 export interface Frame {
     type: MessageType;

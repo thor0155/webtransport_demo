@@ -1,5 +1,5 @@
 import type { ChatState } from "@/models/chat-state";
-import type { ChatPayload } from "@/protocol/payload/chat";
+import type { ChatHistoryResponse, ChatMessage } from "@/protocol/payload/chat";
 import { ConnectionState } from "@/models/connect-state";
 import type { WelcomePayload } from "@/protocol/payload/connection";
 import type {
@@ -40,6 +40,11 @@ export function applyConnecting(
         members: [],
         messages: [],
         events: [],
+        chatHistory: {
+            cursor: null,
+            hasMore: true,
+            loading: false,
+        },
     };
 }
 
@@ -131,7 +136,7 @@ export function applyEventAndLeave(state: ChatState, payload: LeavePayload): Cha
     return applyEvent(applyLeave(state, payload), "leave", `${payload.userId} left`);
 }
 
-export function applyChat(state: ChatState, payload: ChatPayload): ChatState {
+export function applyChat(state: ChatState, payload: ChatMessage): ChatState {
     return {
         ...state,
         messages: [
@@ -174,5 +179,38 @@ export function applyRoomInfo(state: ChatState, payload: RoomInfoPayload): ChatS
     return {
         ...state,
         roomInfo: payload,
+    };
+}
+
+export function applyChatHistoryStart(state: ChatState): ChatState {
+    return {
+        ...state,
+        chatHistory: {
+            ...state.chatHistory,
+            loading: true,
+        },
+    };
+}
+
+export function applyChatHistoryLoaded(state: ChatState, payload: ChatHistoryResponse): ChatState {
+    const oldMessages = [...payload.messages].reverse();
+    return {
+        ...state,
+        messages: [...oldMessages, ...state.messages],
+        chatHistory: {
+            cursor: payload.nextCursor,
+            hasMore: payload.nextCursor !== null,
+            loading: false,
+        },
+    };
+}
+
+export function applyChatHistoryError(state: ChatState): ChatState {
+    return {
+        ...state,
+        chatHistory: {
+            ...state.chatHistory,
+            loading: false,
+        },
     };
 }

@@ -1,5 +1,5 @@
 import type { FrameFlags } from "./flags";
-import type { MessageType } from "./scheme";
+import type { MessageType } from "./opcode";
 
 export const MAGIC = 0x5754;
 export const VERSION = 1;

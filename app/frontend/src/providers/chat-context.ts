@@ -10,9 +10,11 @@ interface ChatContextValue {
 
     disconnect(): void;
 
-    sendChat(roomName:string, message: string): void;
+    sendChat(roomName: string, message: string): void;
 
     clearEvents(): void;
+
+    loadMoreHistory(limit?: number): void;
 }
 
 export const ChatContext = createContext<ChatContextValue | undefined>(undefined);

@@ -1,0 +1,14 @@
+.date-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: var(--space-3) 0;
+}
+
+.date-divider span {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    background: var(--surface-secondary);
+    padding: 2px 12px;
+    border-radius: var(--radius-md);
+}

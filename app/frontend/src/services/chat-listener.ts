@@ -1,5 +1,5 @@
 import type { LogLevel } from "@/models/log";
-import type { ChatPayload } from "@/protocol/payload/chat";
+import type { ChatHistoryResponse, ChatMessage } from "@/protocol/payload/chat";
 import type { WelcomePayload } from "@/protocol/payload/connection";
 import type {
     MembersPayload,
@@ -17,7 +17,9 @@ export interface ChatListener {
 
     onLeave?(payload: LeavePayload): void;
 
-    onChat?(payload: ChatPayload): void;
+    onChat?(payload: ChatMessage): void;
+
+    onChatHistory?(payload: ChatHistoryResponse): void;
 
     onPong?(): void;
 
@@ -29,5 +31,5 @@ export interface ChatListener {
 
     onReconnect?(): void;
 
-    onLog?(level: LogLevel, message: string): void;
+    onLog?(level: LogLevel, code: string, message: string): void;
 }

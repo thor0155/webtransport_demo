@@ -1,4 +1,4 @@
-import type { ChatMessage } from "./chat-message";
+import type { ChatHistory, ChatMessage } from "./chat-message";
 import type { Member } from "./member";
 import type { ChatEvent } from "./chat-event";
 import type { ConnectionState } from "./connect-state";
@@ -16,4 +16,5 @@ export interface ChatState {
     messages: ChatMessage[];
     events: ChatEvent[];
     currentLog?: Log;
+    chatHistory: ChatHistory;
 }
