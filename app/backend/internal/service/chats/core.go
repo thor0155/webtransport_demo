@@ -109,16 +109,19 @@ func (s *chatService) GetHistory(ctx context.Context, request *model.ChatHistory
 		return model.ChatHistoryResponse{}, err
 	}
 
-	userIds := slicetool.MapUnique(page.Messages, func(m *entity.ChatMessage) string {
-		return m.UserId
-	})
+	if len(page.Messages) > 0 {
+		userIds := slicetool.MapUnique(page.Messages, func(m *entity.ChatMessage) string {
+			return m.UserId
+		})
 
-	nameMap, err := s.userNameResolver.ResolveNames(ctx, userIds...)
-	if err != nil {
-		return model.ChatHistoryResponse{}, err
+		nameMap, err := s.userNameResolver.ResolveNames(ctx, userIds...)
+		if err != nil {
+			return model.ChatHistoryResponse{}, err
+		}
+
+		return convtool.ConvChatHistoryResponse(page, nameMap), nil
 	}
-
-	return convtool.ConvChatHistoryResponse(page, nameMap), nil
+	return model.ChatHistoryResponse{}, nil
 }
 
 func NewChatService(logger *zap.Logger, chatRoomDao chatd.ChatRoomDao, chatMessageDao chatd.ChatMessageDao, workTracker obj.WorkTracker, userNameResolver users.NameResolver) (ChatService, error) {

@@ -193,7 +193,7 @@ export function applyChatHistoryStart(state: ChatState): ChatState {
 }
 
 export function applyChatHistoryLoaded(state: ChatState, payload: ChatHistoryResponse): ChatState {
-    const oldMessages = [...payload.messages].reverse();
+    const oldMessages = [...(payload.messages ?? [])].reverse();
     return {
         ...state,
         messages: [...oldMessages, ...state.messages],

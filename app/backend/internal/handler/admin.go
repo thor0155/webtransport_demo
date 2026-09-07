@@ -21,11 +21,8 @@ func (c *adminController) Register(rg *gin.RouterGroup) {
 	rg.GET("/healthz", c.Healthz)
 	rg.GET("/readyz", c.Readyz)
 	rg.GET("/livez", c.Livez)
-
-	if gin.IsDebugging() {
-		rg.GET("/cert", c.getCertHash)
-		rg.POST("/shutdown", c.shutdown)
-	}
+	rg.POST("/shutdown", c.shutdown)
+	rg.GET("/cert", c.getCertHash)
 }
 
 func (a *adminController) shutdown(c *gin.Context) {

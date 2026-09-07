@@ -85,11 +85,12 @@ func (r *redisDB) Close(ctx context.Context) error {
 func (r *redisDB) initSentinel() (*redis.Client, error) {
 	var err error
 	options := &redis.FailoverOptions{
-		MasterName:    r.cfg.MasterName,
-		SentinelAddrs: r.cfg.Endpoints,
-		Username:      r.cfg.Username,
-		Password:      r.cfg.Password,
-		DB:            r.cfg.DB,
+		MasterName:       r.cfg.MasterName,
+		SentinelAddrs:    r.cfg.Endpoints,
+		Username:         r.cfg.Username,
+		Password:         r.cfg.Password,
+		SentinelPassword: r.cfg.Password,
+		DB:               r.cfg.DB,
 	}
 	if r.cfg.PoolSize > 0 {
 		options.PoolSize = r.cfg.PoolSize
