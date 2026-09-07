@@ -1,0 +1,30 @@
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisSentinel
+metadata:
+  name: redis-sentinel
+spec:
+  clusterSize: 1
+  redisSentinelConfig:
+    redisReplicationName: redis-replication # 對應上面 RedisReplication 的 metadata.name
+    masterGroupName: mymaster
+    quorum: "1"
+    downAfterMilliseconds: "5000"
+    failoverTimeout: "10000"
+    parallelSyncs: "1"
+    redisReplicationPassword:
+      secretKeyRef:
+        name: redis-secret
+        key: password
+  kubernetesConfig:
+    image: quay.io/opstree/redis-sentinel:v7.2.13
+    imagePullPolicy: IfNotPresent
+    redisSecret:
+      name: redis-secret
+      key: password
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi

@@ -1,0 +1,37 @@
+version: "3"
+vars:
+  REDIS_DIR: "{{.RESOURCES_DIR}}/redis-operator"
+
+tasks:
+  repo-add:
+    desc: Helm repo
+    status:
+      - helm repo list | grep -q '^ot-helm[[:space:]]'
+    cmds:
+      - helm repo add ot-helm https://ot-container-kit.github.io/helm-charts/ --force-update
+      - helm repo update
+
+  install:
+    desc: Install OT-CONTAINER-KIT/redis-operator
+    status:
+      - helm status redis-operator -n redis-operator
+    deps:
+      - repo-add
+    dir: "{{.REDIS_DIR}}"
+    cmds:
+      - helm upgrade --install redis-operator ot-helm/redis-operator -n redis-operator --create-namespace -f values.yaml
+
+  uninstall:
+    desc: Uninstall OT-CONTAINER-KIT/redis-operator
+    dir: "{{.REDIS_DIR}}"
+    preconditions:
+    - sh: helm status redis-operator -n redis-operator >/dev/null 2>&1
+      msg: Redis Operator is not installed
+    cmds:
+      - helm uninstall redis-operator -n redis-operator
+      
+  status:
+    desc: Check OT-CONTAINER-KIT/redis-operator
+    cmds:
+      - kubectl get pods -n redis-operator
+      - kubectl get crd | grep redis

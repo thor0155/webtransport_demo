@@ -7,6 +7,6 @@ spec:
     spec:
       containers:
         - name: api
-          image: demo-backend:latest
+          image: demo-backend-server:latest
           imagePullPolicy: Always
           # imagePullPolicy: IfNotPresent

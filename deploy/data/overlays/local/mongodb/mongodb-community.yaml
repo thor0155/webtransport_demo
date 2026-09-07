@@ -1,0 +1,44 @@
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: mongodb
+spec:
+  members: 2
+  type: ReplicaSet
+  version: "8.0.23"
+  security:
+    authentication:
+      modes: ["SCRAM"]
+  users:
+    - name: my_app
+      db: admin
+      passwordSecretRef:
+        name: mongodb-secret
+        key: password
+      roles:
+        - name: readWrite
+          db: demo # 換成你實際的資料庫名稱
+        - name: clusterAdmin
+          db: admin
+      scramCredentialsSecretName: my-app-scram
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongod
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+      volumeClaimTemplates:
+        - metadata:
+            name: mongodb8-data-volume
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 1Gi

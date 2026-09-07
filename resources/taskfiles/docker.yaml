@@ -1,5 +1,8 @@
 version: "3"
 
+vars:
+  APP_ENV: '{{.APP_ENV | default "production"}}'
+
 tasks:
   run:backend:migrate:
     desc: Start backend migrator container
@@ -53,6 +56,7 @@ tasks:
     cmds:
       - docker compose build backend_migrate
     env:
+      BACKEND_MIGRATE_ENV_NAME: '{{.APP_ENV}}'
       BACKEND_MIGRATE_BUILD_VERSION: '{{.BUILD_VERSION}}'
       BACKEND_MIGRATE_BUILD_DATE: '{{.BUILD_DATE}}'
       BACKEND_MIGRATE_BUILD_COMMIT: '{{.BUILD_COMMIT}}'
@@ -64,6 +68,7 @@ tasks:
     cmds:
       - docker compose build backend_server
     env:
+      BACKEND_SERVER_ENV_NAME: '{{.APP_ENV}}'
       BACKEND_SERVER_BUILD_VERSION: '{{.BUILD_VERSION}}'
       BACKEND_SERVER_BUILD_DATE: '{{.BUILD_DATE}}'
       BACKEND_SERVER_BUILD_COMMIT: '{{.BUILD_COMMIT}}'

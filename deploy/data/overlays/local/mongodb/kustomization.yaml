@@ -1,0 +1,18 @@
+# =============================================================
+# MongoDB ReplicaSet via MCK (MongoDB Controllers for Kubernetes)
+#
+# 注意:舊的 mongodb/mongodb-kubernetes-operator(Community Operator)
+# 已於 2025 年 EOL 並封存,現在統一由 mongodb/mongodb-kubernetes 這個
+# 新 repo/Helm chart(chart 名稱: mongodb-kubernetes)安裝與維護。
+# 底下的 MongoDBCommunity CRD 定義本身沒有變動,只是 operator 換了。
+#
+# 前置需求:先安裝 CRD + operator(見部署步驟說明)
+#
+# 部署後,Operator 會自動:
+#   - 建立 3 個節點的 StatefulSet 並組成 replica set(名稱 rs0)
+#   - 執行 rs.initiate(),不需要像手寫版那樣另外寫 Job
+#   - 建立一個 Secret,內含現成可用的連線字串(見下方說明)
+# =============================================================
+
+resources:
+  - mongodb-community.yaml

@@ -1,0 +1,43 @@
+version: "3"
+vars:
+  MONGODB_DIR: "{{.RESOURCES_DIR}}/mongodb-operator"
+  MONGODB_COMMUNITY_NAME: '{{.MONGODB_COMMUNITY_NAME | default "mongodb"}}'
+
+tasks:
+  repo-add:
+    desc: Helm repo
+    status:
+      - helm repo list | grep -q '^mongodb[[:space:]]'
+    cmds:
+      - helm repo add mongodb https://mongodb.github.io/helm-charts
+      - helm repo update
+
+  install:
+    desc: Install MongoDB Kubernetes Operator
+    status:
+      - helm status mongodb-kubernetes-operator -n {{.env}}
+    deps:
+      - repo-add
+    dir: "{{.MONGODB_DIR}}"
+    cmds:
+      - helm upgrade --install mongodb-kubernetes-operator mongodb/mongodb-kubernetes -n {{.env}} --create-namespace -f values.yaml
+
+  uninstall:
+    desc: Uninstall MongoDB Kubernetes Operator
+    dir: "{{.MONGODB_DIR}}"
+    preconditions:
+    - sh: helm status mongodb-kubernetes-operator -n {{.env}} >/dev/null 2>&1
+      msg: MongoDB Kubernetes Operator is not installed
+    cmds:
+      - helm uninstall mongodb-kubernetes-operator -n {{.env}}
+      
+  status:
+    desc: Check MongoDB Kubernetes Operator
+    cmds:
+      - kubectl get pods -n mongodb
+      - kubectl get crd | grep mongodb
+
+  info:
+    desc: Show MongoDB Community info
+    cmds:
+      - kubectl get mongodbcommunity {{.MONGODB_COMMUNITY_NAME}} -n {{.env}} -o yaml

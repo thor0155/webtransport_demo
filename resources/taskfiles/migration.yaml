@@ -1,0 +1,25 @@
+version: "3"
+
+vars:
+  template_tool: '{{.RESOURCES_TOOLS_DIR}}/template'
+  migration_dir: '{{.REAL_ROOT}}/{{.DEPLOY_DIR}}/migration'
+  template_yaml: '{{.migration_dir}}/base/.patch-temp.yaml'
+  config_template_yaml: '{{.migration_dir}}/base/.config-temp.yaml'
+  target_yaml: '{{.migration_dir}}/.overlays/{{.env}}/kustomization.yaml'
+  target_config_yaml: '{{.migration_dir}}/.overlays/{{.env}}/config/kustomization.yaml'
+
+tasks:
+  prepare:
+    desc: Prepare migration kustomization.yaml
+    cmds:
+      - |
+        if [ ! -f "{{.target_config_yaml}}" ]; then
+          mkdir -p "$(dirname "{{.target_config_yaml}}")"
+          cp "{{.config_template_yaml}}" "{{.target_config_yaml}}"
+        fi
+      - >-
+        go -C {{.template_tool}} run . 
+        -src {{.template_yaml}} 
+        -dst {{.target_yaml}} 
+        -namespace {{.env}}   
+        -version {{.migration_tag}}

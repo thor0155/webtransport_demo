@@ -5,3 +5,9 @@ generatorOptions:
   
 resources:
   - ../../base
+
+patches:
+  - path: patch-certificate.yaml
+    target:
+      kind: Certificate
+      name: my-cert-keygen

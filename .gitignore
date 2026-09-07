@@ -3,3 +3,5 @@ traefik/values-default.yaml
 *.pem
 .vscode/
 bin/
+.env
+.overlays/

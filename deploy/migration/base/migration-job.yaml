@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: migration
+  # generateName: migration
+  labels:
+    app.kubernetes.io/name: migration
+    app.kubernetes.io/component: tool
+    app.kubernetes.io/part-of: chat-demo
+
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: migration
+        app.kubernetes.io/component: tool
+        app.kubernetes.io/part-of: chat-demo
+
+    spec:
+      restartPolicy: Never 
+
+      containers:
+        - name: gorm
+          image: demo-backend-migrate:latest
+          args:
+          - migrate
+          - gorm
+          envFrom:
+            - configMapRef:
+                name: migration-config
+            - secretRef:
+                name: migration-secret
+
+        - name: mongodb
+          image: demo-backend-migrate:latest
+          args:
+            - migrate
+            - mongodb
+          envFrom:
+            - configMapRef:
+                name: migration-config
+            - secretRef:
+                name: migration-secret

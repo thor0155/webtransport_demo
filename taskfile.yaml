@@ -1,10 +1,20 @@
 version: "3"
 
+dotenv:
+  - .env
+  
 vars:
+  migration_tag: '{{.migration_tag | default "latest"}}'
+  env: '{{.env | default "local"}}'
+  root: '{{.ROOT_DIR}}'
+  REAL_ROOT: '{{replace "\\" "/" .root}}'
   APP_DIR: app
+  RESOURCES_DIR: resources
+  RESOURCES_TOOLS_DIR: "{{.RESOURCES_DIR}}/tools"
   BACKEND_DIR: "{{.APP_DIR}}/backend"
   FRONTEND_DIR: "{{.APP_DIR}}/frontend"
   DOCKER_COMPOSE_DIR: app
+  DEPLOY_DIR: deploy
   BUILD_VERSION:
     sh: git describe --tags --always --dirty 2>/dev/null || echo "v0.0.0"
   BUILD_DATE:
@@ -18,24 +28,24 @@ vars:
 includes:
   backend:
     taskfile: ./resources/taskfiles/backend.yaml
-    vars:
-      BACKEND_DIR: "{{.BACKEND_DIR}}"
+    # vars:
+    #   xxx: "{{.xxx | default "yyy"}}"
   frontend:
     taskfile: ./resources/taskfiles/frontend.yaml
-    vars:
-      FRONTEND_DIR: "{{.FRONTEND_DIR}}"
   docker:
     taskfile: ./resources/taskfiles/docker.yaml
-    vars:
-      DOCKER_COMPOSE_DIR: "{{.DOCKER_COMPOSE_DIR}}"
-      BUILD_VERSION: "{{.BUILD_VERSION}}"
-      BUILD_DATE: "{{.BUILD_DATE}}"
-      BUILD_COMMIT: "{{.BUILD_COMMIT}}"
-      BUILD_BRANCH: "{{.BUILD_BRANCH}}"
   k8s:
     taskfile: ./resources/taskfiles/k8s.yaml
   envoy:
     taskfile: ./resources/taskfiles/envoy.yaml
+  redis-op:
+    taskfile: ./resources/taskfiles/redis-operator.yaml
+  mongodb-op:
+    taskfile: ./resources/taskfiles/mongodb-operator.yaml
+  cert:
+    taskfile: ./resources/taskfiles/cert-manager.yaml
+  migration:
+    taskfile: ./resources/taskfiles/migration.yaml
 
 tasks:
   default:

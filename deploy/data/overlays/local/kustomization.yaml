@@ -1,0 +1,35 @@
+namespace: local
+
+generatorOptions:
+  disableNameSuffixHash: true
+  
+resources:
+  # - ../../base
+  - mysql
+  - mongodb
+  - redis
+
+secretGenerator:
+  - name: mongodb-secret
+    type: Opaque
+    literals:
+      - password="mypassword"
+  
+  - name: redis-secret
+    type: Opaque
+    # envs:
+    #   - 
+    literals:
+      - password="mypassword"
+
+  - name: mysql-secret
+    literals:
+      - MYSQL_ROOT_PASSWORD=mypassword
+
+configMapGenerator:
+  - name: mysql-config
+    literals:
+      - MYSQL_DATABASE=demo
+      
+
+  

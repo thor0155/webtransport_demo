@@ -1,0 +1,14 @@
+namespace: {{.NAMESPACE}}
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+  - ../../base
+  - config
+
+nameSuffix: -{{.MIGRATION_NAME_VERSION}}
+
+images:
+  - name: demo-backend-migrate
+    newTag: {{.MIGRATION_VERSION}}

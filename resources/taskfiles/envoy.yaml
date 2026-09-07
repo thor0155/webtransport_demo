@@ -1,42 +1,51 @@
 version: "3"
 
+vars:
+  ENVOY_DIR: "{{.RESOURCES_DIR}}/envoy"
+
 tasks:
   # -------------------------
   # Envoy Gateway
   # -------------------------
   crds:install:
     desc: Install Envoy Gateway CRDs via Helm
-    dir: envoy
+    dir: "{{.ENVOY_DIR}}"
+    status:
+      - kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1
     cmds:
       - helm template eg-crds oci://docker.io/envoyproxy/gateway-crds-helm -f crds-values.yaml | kubectl apply --server-side -f -
   crds:uninstall:
     desc: Uninstall Envoy Gateway CRDs
-    dir: envoy
+    dir: "{{.ENVOY_DIR}}"
     cmds:
       - helm template eg-crds oci://docker.io/envoyproxy/gateway-crds-helm -f crds-values.yaml | kubectl delete -f -
     
   install:
     desc: Install Envoy Gateway via Helm
-    dir: envoy
+    status:
+      - helm status eg -n envoy-gateway-system
+    dir: "{{.ENVOY_DIR}}"
+    deps:
+      - crds:install
     cmds:
       # - helm install eg oci://docker.io/envoyproxy/gateway-helm --version v1.8.3 -n envoy-gateway-system --create-namespace --skip-crds -f values.yaml 
-      - helm install eg oci://docker.io/envoyproxy/gateway-helm -n envoy-gateway-system --create-namespace --skip-crds -f values.yaml
+      - helm upgrade --install eg oci://docker.io/envoyproxy/gateway-helm -n envoy-gateway-system --create-namespace --skip-crds -f values.yaml
 
   upgrade:
     desc: Upgrade Envoy Gateway via Helm
-    dir: envoy
+    dir: "{{.ENVOY_DIR}}"
     cmds:
       - helm upgrade eg oci://docker.io/envoyproxy/gateway-helm -n envoy-gateway-system --skip-crds -f values.yaml
 
   uninstall:
     desc: Uninstall Envoy Gateway
-    dir: envoy
+    dir: "{{.ENVOY_DIR}}"
     cmds:
+      - task: crds:uninstall
       - helm uninstall eg -n envoy-gateway-system
 
   status:
     desc: Check Envoy Gateway
-    dir: envoy
     cmds:
       - kubectl get pods -n envoy-gateway-system
       - kubectl get svc -n envoy-gateway-system

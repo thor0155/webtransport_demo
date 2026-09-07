@@ -1,37 +1,119 @@
 version: "3"
 
-vars:
-  env: '{{.env | default "local"}}'
-
 tasks:
   apply:
     desc: Apply k8s manifests
-    vars:
-      cert: '{{.cert | default "my-cert-keygen"}}'
     cmds:
       - task: apply:bootstrap
-        # vars:
-        #   env: '{{.env}}'
-      - kubectl wait --for=condition=Ready certificate/{{.cert}} -n {{.env}} --timeout=30s
+      - task: apply:data
+      - task: apply:migration
       - task: apply:app
-        # vars:
-        #   env: '{{.env}}'
-      
+
+  apply:migration:
+    desc: Apply k8s manifests for migration only
+    status:
+      - kubectl get job migration-{{.migration_tag}} -n {{.env}}
+    deps:
+      - create:namespace
+      - :migration:prepare
+    cmds:
+      - kubectl apply -k deploy/migration/.overlays/{{.env}}
+      - task: wait
+        vars:
+          kind: "job"
+          name: "migration-{{.migration_tag}}"
+          condition: "SuccessCriteriaMet"
+
   apply:app:
     desc: Apply k8s manifests for app only
+    status:
+      - kubectl get deployment backend -n {{.env}}
+      - kubectl get deployment frontend -n {{.env}}
+    deps:
+      - :envoy:install
+      - create:namespace
     cmds:
       - kubectl apply -k deploy/app/overlays/{{.env}}
 
   apply:bootstrap:
     desc: Apply k8s manifests for bootstrap only
+    vars:
+      cert: '{{.cert | default "my-cert-keygen"}}'
+    deps:
+      - :cert:install
+      - create:namespace
     cmds:
       - kubectl apply -k deploy/bootstrap/overlays/{{.env}}
+      - task: wait
+        vars:
+          kind: "certificate"
+          name: "{{.cert}}"
+          timeout: 120
+
+  apply:data:
+    desc: Apply k8s manifests for data only
+    deps:
+      - create:namespace
+    vars:
+      target_option: '{{if eq .env "local"}}local{{else}}default{{end}}'
+    cmds:
+      - task: apply:data:{{.target_option}}
+
+  apply:data:local:
+    internal: true
+    deps:
+      - :redis-op:install
+      - :mongodb-op:install
+    cmds:
+      - task: apply:data:default
+      - task: wait
+        vars:
+          kind: "mongodbcommunity"
+          name: "mongodb"
+          timeout: 120
+          cond_field: "jsonpath='{.status.phase}'"
+          condition: "Running"
+      - task: wait
+        vars:
+          kind: "statefulset"
+          name: "redis-sentinel-sentinel"
+          cond_field: "jsonpath='{.status.readyReplicas}'"
+          condition: 1
+      - task: wait
+        vars:
+          kind: "statefulset"
+          name: "mysql"
+          cond_field: "jsonpath='{.status.readyReplicas}'"
+          condition: 1
+
+  apply:data:default:
+    internal: true
+    cmds:
+      - kubectl apply -k deploy/data/overlays/{{.env}}
+  
+  create:namespace:
+    desc: Create k8s namespace
+    status:
+      - kubectl get ns {{.env}}
+    cmds:
+      - kubectl create ns {{.env}} --dry-run=client -o yaml | kubectl apply -f -
 
   delete:
     desc: Delete k8s manifests
     cmds:
-      - kubectl delete ns/{{.env}}
-      
+      - task: delete:app
+      - task: delete:data
+      - task: delete:migration
+      - task: delete:bootstrap
+  
+  delete:migration:
+    desc: Delete k8s manifests for migration only
+    preconditions:
+      - sh: test -d "deploy/migration/.overlays/{{.env}}"
+        msg: "Directory does not exist: 'deploy/migration/.overlays/{{.env}}'"
+    cmds:
+      - kubectl delete -k deploy/migration/.overlays/{{.env}}
+
   delete:app:
     desc: Delete k8s manifests for app only
     cmds:
@@ -41,6 +123,21 @@ tasks:
     desc: Delete k8s manifests for bootstrap only
     cmds:
       - kubectl delete -k deploy/bootstrap/overlays/{{.env}}
+
+  delete:data:
+    desc: Delete k8s manifests for data only
+    cmds:
+      - kubectl delete -k deploy/data/overlays/{{.env}}
+
+  delete:namespace:
+    desc: Delete k8s namespace
+    cmds:
+      - kubectl delete ns {{.env}}
+
+  delete:pvc:
+    desc: Delete k8s PersistentVolumeClaims
+    cmds:
+      - kubectl delete pvc --all -n {{.env}}
 
   get:
     desc: Get all resources
@@ -67,3 +164,32 @@ tasks:
     desc: Restart frontend pods
     cmds:
       - kubectl rollout restart deployment frontend -n {{.env}}
+
+  wait:
+    internal: true
+    requires:
+      vars:
+        - kind
+        - name
+    vars:
+      cond_field: '{{.cond_field | default "condition"}}'
+      namespace: "{{.namespace | default .env}}"
+      condition: '{{.condition | default "Ready"}}'
+      timeout: '{{.timeout | default 60}}'
+    cmds:
+      - |
+        echo "Waiting {{.kind}}/{{.name}}..."
+
+        end=$(($(date +%s) + {{.timeout}}))
+
+        while [ "$(date +%s)" -lt "$end" ]; do
+          if kubectl get {{.kind}} {{.name}} -n {{.namespace}} >/dev/null 2>&1; then
+            kubectl wait --for={{.cond_field}}={{.condition}} {{.kind}}/{{.name}} -n {{.namespace}} --timeout={{.timeout}}s
+            exit $?
+          fi
+
+          sleep 1
+        done
+
+        echo "Timeout waiting for {{.kind}}/{{.name}} to be created."
+        exit 1

@@ -30,15 +30,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-config
-            # - secretRef:
-            #     name: master
+            - secretRef:
+                name: backend-secret
           env:
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: MYSQL_DSN
-              value: "root:password@tcp(mysql:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local"
           ports:
             - name: http
               containerPort: 8080

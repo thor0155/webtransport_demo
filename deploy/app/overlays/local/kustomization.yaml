@@ -5,7 +5,6 @@ generatorOptions:
   
 resources:
   - ../../base
-  - ../../../../mysql
 
 patches:
   - path: patch-backend-image.yaml
@@ -18,15 +17,21 @@ patches:
       kind: Deployment
       name: frontend
 
-# secretGenerator:
-#   - name: tls-cert-secret
-#     type: kubernetes.io/tls
-#     files:
-#       - tls.crt=localhost+4.pem
-#       - tls.key=localhost+4-key.pem
+secretGenerator:
+  - name: backend-secret
+    literals:
+      - DB_MONGODB_USERNAME=my_app 
+      - DB_MONGODB_PASSWORD=mypassword
+      - DB_MYSQL_PASSWORD=mypassword
+      - DB_REDIS_PASSWORD=mypassword
+      
 
 configMapGenerator:
   - name: backend-config
     literals:
       - WEBTRANSPORT_USE_SELF_CERT=false
+      - DB_REDIS_MODE=sentinel
+      - DB_MONGODB_REPLICA_SET=mongodb
+      - DB_MONGODB_HOSTS=mongodb-svc:27017
+      - DB_REDIS_ENDPOINTS=redis-sentinel-sentinel:26379 
 

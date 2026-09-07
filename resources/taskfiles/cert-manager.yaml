@@ -1,0 +1,39 @@
+version: "3"
+
+tasks:
+
+  install:
+    desc: Install cert-manager
+    status:
+      - helm status cert-manager -n cert-manager
+    cmds:
+      - helm install cert-manager oci://quay.io/jetstack/charts/cert-manager --version v1.21.1 -n cert-manager --create-namespace --set crds.enabled=true
+      - task: apitoken
+
+  uninstall:
+    desc: Uninstall cert-manager
+    dir: "{{.MONGODB_DIR}}"
+    preconditions:
+    - sh: helm status cert-manager -n cert-manager >/dev/null 2>&1
+      msg: cert-manager is not installed
+    cmds:
+      - helm uninstall cert-manager -n cert-manager
+      
+  status:
+    desc: Check cert-manager
+    cmds:
+      - kubectl get pods -n cert-manager
+      - kubectl get crd | grep cert-manager
+  
+  apitoken:
+    desc: Create API token for cert-manager
+    preconditions:
+      - sh: test -n "{{.DNS_API_TOKEN}}"
+        msg: "DNS_API_TOKEN is required. Set DNS_API_TOKEN or create .env."
+    status:
+      - kubectl get secret cloudflare-api-token -n cert-manager
+    cmds:
+      - >-  
+        kubectl create secret generic cloudflare-api-token
+        --from-literal=api-token={{.DNS_API_TOKEN}}
+        -n cert-manager

@@ -1,0 +1,18 @@
+generatorOptions:
+  disableNameSuffixHash: true
+
+secretGenerator:
+  - name: migration-secret
+    literals:
+      - DB_MONGODB_USERNAME=my_app 
+      - DB_MONGODB_PASSWORD=mypassword
+      - DB_MYSQL_PASSWORD=mypassword
+      - DB_REDIS_PASSWORD=mypassword
+      
+configMapGenerator:
+  - name: migration-config
+    literals:
+      - DB_REDIS_MODE=sentinel
+      - DB_MONGODB_REPLICA_SET=mongodb
+      - DB_MONGODB_HOSTS=mongodb-svc:27017
+      - DB_REDIS_ENDPOINTS=redis-sentinel-sentinel:26379 

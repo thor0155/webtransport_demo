@@ -1,0 +1,22 @@
+# =============================================================
+# Redis Sentinel via OT-CONTAINER-KIT/redis-operator
+# 前置需求:先安裝 operator(見部署步驟說明)
+#
+# 部署順序:
+#   1. redis-secret (密碼)
+#   2. RedisReplication (實際的 Redis master + replica 節點)
+#   3. RedisSentinel (監控上面那組 RedisReplication,負責故障轉移)
+#
+# 連線方式(應用程式端,搭配 go-redis 的 FailoverClient):
+#   MasterName: mymaster
+#   SentinelAddrs:
+#     redis-sentinel-sentinel-0.redis-sentinel-sentinel-headless.default.svc.cluster.local:26379
+#     redis-sentinel-sentinel-1.redis-sentinel-sentinel-headless.default.svc.cluster.local:26379
+#     redis-sentinel-sentinel-2.redis-sentinel-sentinel-headless.default.svc.cluster.local:26379
+#   (實際 headless service 名稱請用 `kubectl get svc` 確認,不同 operator
+#    版本的命名規則可能略有差異)
+# =============================================================
+
+resources:
+  - redis-replication.yaml
+  - redis-sentinel.yaml
