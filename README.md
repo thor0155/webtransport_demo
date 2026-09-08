@@ -273,6 +273,10 @@ task envoy:status          # check Envoy Gateway pods/services
 task cert:status           # check cert-manager pods/CRDs
 ```
 
+## Screenshots
+
+![Chat UI](docs/images/snapshot.png)
+
 ## License
 
 Add your license of choice here (e.g. MIT).
