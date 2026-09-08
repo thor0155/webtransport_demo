@@ -112,22 +112,22 @@ tasks:
       - sh: test -d "deploy/migration/.overlays/{{.env}}"
         msg: "Directory does not exist: 'deploy/migration/.overlays/{{.env}}'"
     cmds:
-      - kubectl delete -k deploy/migration/.overlays/{{.env}}
+      - kubectl delete -k deploy/migration/.overlays/{{.env}} --ignore-not-found
 
   delete:app:
     desc: Delete k8s manifests for app only
     cmds:
-      - kubectl delete -k deploy/app/overlays/{{.env}}
+      - kubectl delete -k deploy/app/overlays/{{.env}} --ignore-not-found
 
   delete:bootstrap:
     desc: Delete k8s manifests for bootstrap only
     cmds:
-      - kubectl delete -k deploy/bootstrap/overlays/{{.env}}
+      - kubectl delete -k deploy/bootstrap/overlays/{{.env}} --ignore-not-found
 
   delete:data:
     desc: Delete k8s manifests for data only
     cmds:
-      - kubectl delete -k deploy/data/overlays/{{.env}}
+      - kubectl delete -k deploy/data/overlays/{{.env}} --ignore-not-found
 
   delete:namespace:
     desc: Delete k8s namespace

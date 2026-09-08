@@ -27,13 +27,15 @@ tasks:
   
   apitoken:
     desc: Create API token for cert-manager
+    vars:
+      DNS_PROVIDER: '{{.DNS_PROVIDER | default "cloudflare"}}'
     preconditions:
       - sh: test -n "{{.DNS_API_TOKEN}}"
         msg: "DNS_API_TOKEN is required. Set DNS_API_TOKEN or create .env."
     status:
-      - kubectl get secret cloudflare-api-token -n cert-manager
+      - kubectl get secret {{.DNS_PROVIDER}}-api-token -n cert-manager
     cmds:
       - >-  
-        kubectl create secret generic cloudflare-api-token
+        kubectl create secret generic {{.DNS_PROVIDER}}-api-token
         --from-literal=api-token={{.DNS_API_TOKEN}}
         -n cert-manager
