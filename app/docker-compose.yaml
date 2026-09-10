@@ -15,6 +15,8 @@ services:
       - LOG_LEVEL=debug
     networks:
       - mylab
+    command: ["migrate"]
+    restart: "no"
 
   backend_server:
     image: demo-backend-server:${BACKEND_SERVER_TAG:-latest}
@@ -31,9 +33,12 @@ services:
       - "8080:8080"
       - "8443:8443/udp"
     environment:
-      - WEBTRANSPORT_USE_SELF_CERT=true
+      - WEBTRANSPORT_SERVER_USE_SELF_CERT=true
       - GIN_MODE=test
       - LOG_LEVEL=debug
+      - HTTP_CORS_ENABLED=true
+      - DB_MONGODB_USERNAME=root
+      - DB_MONGODB_PASSWORD=root
     networks:
       - mylab
 
@@ -45,6 +50,10 @@ services:
       - "5173:80"
     depends_on:
       - backend_server
+    environment:
+      - WEBTRANSPORT_ENDPOINT=https://localhost:8443/webtransport
+      - WEBTRANSPORT_USE_CERT_HASH=true
+      - API_BASE_URL=http://localhost:8080
     networks:
       - mylab
 

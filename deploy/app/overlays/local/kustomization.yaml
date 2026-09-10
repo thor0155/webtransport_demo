@@ -33,5 +33,10 @@ configMapGenerator:
       - DB_REDIS_MODE=sentinel
       - DB_MONGODB_REPLICA_SET=mongodb
       - DB_MONGODB_HOSTS=mongodb-svc:27017
-      - DB_REDIS_ENDPOINTS=redis-sentinel-sentinel:26379 
+      - DB_REDIS_ENDPOINTS=redis-sentinel-sentinel:26379
+
+  - name: frontend-config
+    literals:
+      - WEBTRANSPORT_ENDPOINT=https://wt.thorlinlab.cc:8443/webtransport
+      - API_BASE_URL=https://api.thorlinlab.cc/api 
 

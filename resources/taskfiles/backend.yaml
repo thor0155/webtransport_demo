@@ -22,7 +22,17 @@ tasks:
       - go run ./cmd/server
 
   run:migrate:
-    desc: Run Go backend migration locally
+    desc: Run Go backend migration locally. (Up only)
+    dir: "{{.BACKEND_DIR}}"
+    deps:
+      - task: wire:gen 
+        vars:
+          folder: "/cmd/migrate"
+    cmds:
+      - go run ./cmd/migrate migrate 
+
+  run:migrate:gorm:
+    desc: Run Go backend gorm migration locally
     dir: "{{.BACKEND_DIR}}"
     deps:
       - task: wire:gen 
@@ -33,6 +43,18 @@ tasks:
       version: '{{.version}}'
     cmds:
       - go run ./cmd/migrate migrate gorm {{if ne .flag ""}}{{.flag}} {{end}}{{.version}}
+
+  run:migrate:mongodb:
+    desc: Run Go backend mongodb migration locally
+    dir: "{{.BACKEND_DIR}}"
+    deps:
+      - task: wire:gen 
+        vars:
+          folder: "/cmd/migrate"
+    vars:
+      flag: '{{.flag}}'
+      version: '{{.version}}'
+    cmds:
       - go run ./cmd/migrate migrate mongodb {{if ne .flag ""}}{{.flag}} {{end}}{{.version}}
 
   build:server:

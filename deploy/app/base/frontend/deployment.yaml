@@ -44,6 +44,10 @@ spec:
             - name: http
               containerPort: 80
 
+          envFrom:
+            - configMapRef:
+                name: frontend-config
+
           readinessProbe:
             httpGet:
               path: /
@@ -80,7 +84,7 @@ spec:
 
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: false
             runAsNonRoot: true
             runAsUser: 101
             runAsGroup: 101

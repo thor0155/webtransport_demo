@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
@@ -28,6 +29,19 @@ type mongoDB struct {
 	cfg             *MongoConfig
 	name            string
 	defaultDatabase *mongo.Database
+}
+
+type authInfoResult struct {
+	AuthInfo struct {
+		AuthenticatedUsers []struct {
+			User string `bson:"user"`
+			Db   string `bson:"db"`
+		} `bson:"authenticatedUsers"`
+		AuthenticatedUserRoles []struct {
+			Role string `bson:"role"`
+			Db   string `bson:"db"`
+		} `bson:"authenticatedUserRoles"`
+	} `bson:"authInfo"`
 }
 
 // Database implements [MongoDB].
@@ -114,15 +128,40 @@ func (m *mongoDB) Init() error {
 		return errors.WithStack(err)
 	}
 
-	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := m.client.Ping(pingCtx, readpref.Primary()); err != nil {
-		return errors.WithStack(err)
+	timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer timeoutCancel()
+	if err := m.Check(timeoutCtx); err != nil {
+		return err
 	}
 
 	m.defaultDatabase = m.client.Database(m.cfg.DbName)
 
 	m.logger.With(zap.Namespace("connect")).Debug("init", utils.ObjectToZapFields(m.cfg)...)
+	return nil
+}
+
+func (m *mongoDB) Check(ctx context.Context) error {
+	if err := m.client.Ping(ctx, readpref.Primary()); err != nil {
+		return errors.WithStack(err)
+	}
+
+	var result authInfoResult
+	if err := m.client.Database("admin").RunCommand(ctx, bson.D{
+		{Key: "connectionStatus", Value: 1},
+		// {Key: "showPrivileges", Value: true},
+	}).Decode(&result); err != nil {
+		return errors.WithStack(err)
+	}
+
+	resultBytes, err := bson.MarshalExtJSON(result, false, false)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	m.logger.Debug("test admin database connectionStatus", zap.ByteString("result", resultBytes))
+
+	if len(result.AuthInfo.AuthenticatedUsers) == 0 {
+		return errors.New("MongoDB The connection has not yet been verified (anonymous connection).")
+	}
 	return nil
 }
 

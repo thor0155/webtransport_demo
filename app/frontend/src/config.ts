@@ -5,7 +5,13 @@ interface Config {
     certHash: string;
 }
 
-export const config: Config = {
+declare global {
+    interface Window {
+        __APP_CONFIG__?: Config;
+    }
+}
+
+export const config: Config = window.__APP_CONFIG__ ?? {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080",
     webtransportEndpoint: import.meta.env.VITE_WEBTRANSPORT_ENDPOINT ?? "https://localhost:8443",
     useCertHash: import.meta.env.VITE_WEBTRANSPORT_USE_CERT_HASH === "true",
