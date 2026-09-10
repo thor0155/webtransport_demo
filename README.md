@@ -40,7 +40,7 @@ A real-time chat room demo built on **WebTransport (HTTP/3 + QUIC)**, with a Go 
 
 WebTransport requires a valid (or trusted) TLS certificate even for local development.
 
-- **[mkcert](https://github.com/FiloSottile/mkcert)** — to generate a locally-trusted certificate, or
+- ~~**[mkcert](https://github.com/FiloSottile/mkcert)** — to generate a locally-trusted certificate, or~~
 - set `WEBTRANSPORT_USE_SELF_CERT=true` (backend) to use a generated self-signed certificate and `VITE_WEBTRANSPORT_USE_CERT_HASH=true` (frontend) so the browser pins the cert hash instead of validating a CA chain
 
 ### Required for Kubernetes deployment
@@ -136,7 +136,7 @@ This runs the backend and frontend directly on your machine, against local MySQL
 
 6. Open the app in a WebTransport-capable browser, enter a display name and room, and start chatting. Open a second browser/tab to see the member list and messages update in real time.
 
-> Note: When using a self-signed certificate, the frontend must trust the server's certificate hash (`VITE_WEBTRANSPORT_USE_CERT_HASH=true`) — Chrome-based browsers use this to allow untrusted certs for WebTransport in development. For a fully trusted local certificate instead, generate one with `mkcert` and point `WEBTRANSPORT_SERVER_CERT_FILE` / `WEBTRANSPORT_SERVER_KEY_FILE` at it.
+> Note: When using a self-signed certificate, the frontend must trust the server's certificate hash (`VITE_WEBTRANSPORT_USE_CERT_HASH=true`) — Chrome-based browsers use this to allow untrusted certs for WebTransport in development. ~~For a fully trusted local certificate instead, generate one with `mkcert` and point `WEBTRANSPORT_SERVER_CERT_FILE` / `WEBTRANSPORT_SERVER_KEY_FILE` at it.~~
 
 ### Alternative: Run with Docker Compose
 
