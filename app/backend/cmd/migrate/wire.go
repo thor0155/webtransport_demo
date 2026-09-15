@@ -8,9 +8,9 @@ import (
 	"api/internal/frameworks/cmder"
 	"api/internal/frameworks/config"
 	"api/internal/frameworks/db"
+	"api/internal/frameworks/logger"
 	"api/internal/frameworks/migrator"
 	"api/internal/frameworks/obj"
-	"api/internal/logger"
 
 	"github.com/google/wire"
 	"go.uber.org/zap"

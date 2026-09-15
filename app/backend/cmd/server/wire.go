@@ -7,9 +7,9 @@ import (
 	"api/internal/dao"
 	"api/internal/frameworks/config"
 	"api/internal/frameworks/db"
+	"api/internal/frameworks/logger"
 	"api/internal/frameworks/obj"
 	"api/internal/handler"
-	"api/internal/logger"
 	"api/internal/server"
 	"api/internal/service"
 

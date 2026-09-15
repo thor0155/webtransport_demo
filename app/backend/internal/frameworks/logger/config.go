@@ -9,5 +9,8 @@ type LogConfig struct {
 func ProvideLogConfig(helper config.ConfigHelper) (*LogConfig, error) {
 	var r LogConfig
 	err := helper.UnmarshalKey("log", &r)
+	if r.Level == "" {
+		r.Level = "info"
+	}
 	return &r, err
 }
