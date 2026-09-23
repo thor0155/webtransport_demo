@@ -6,3 +6,7 @@ spec:
   issuerRef:
     name: letsencrypt-dns-production
     kind: ClusterIssuer
+  dnsNames:
+    - "wt.thorlinlab.cc"
+    - "api.thorlinlab.cc"
+    - "app.thorlinlab.cc"

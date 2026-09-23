@@ -11,3 +11,13 @@ patches:
     target:
       kind: Certificate
       name: my-cert-keygen
+  
+  - target:
+      group: cert-manager.io
+      version: v1
+      kind: ClusterIssuer
+      name: letsencrypt-dns-production
+    patch: |-
+      - op: replace
+        path: /spec/acme/solvers/0/selector/dnsZones/0
+        value: thorlinlab.cc

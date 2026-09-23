@@ -16,6 +16,16 @@ patches:
     target:
       kind: Deployment
       name: frontend
+      
+  - path: patch-api-httproute-hostnames.yaml
+    target:
+      kind: HTTPRoute
+      name: api-route
+      
+  - path: patch-app-httproute-hostnames.yaml
+    target:
+      kind: HTTPRoute
+      name: app-route
 
 secretGenerator:
   - name: backend-secret

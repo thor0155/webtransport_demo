@@ -9,7 +9,6 @@ spec:
   gatewayClassName: envoy-gateway
   listeners:
   - name: https
-    hostname: "*.thorlinlab.cc"
     protocol: HTTPS
     port: 443
     tls:

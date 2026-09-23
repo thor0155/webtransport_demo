@@ -7,7 +7,6 @@ spec:
     - name: eg
       sectionName: https
   hostnames:
-  - api.thorlinlab.cc
   - api.example.com
 
   rules:
@@ -37,7 +36,6 @@ spec:
     - name: eg
       sectionName: https
   hostnames:
-  - app.thorlinlab.cc
   - app.example.com
 
   rules:
