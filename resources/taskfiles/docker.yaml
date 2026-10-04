@@ -97,27 +97,35 @@ tasks:
   tag:
     desc: Tag docker image
     vars:
-      source_tag: '{{.package}}:{{.version}}'
-      dest_tag: '{{.repository}}/{{.package}}:{{.version}}'
+      source_tag: '{{.source_tag | default "latest"}}'
+      dest_tag: '{{.dest_tag | default "latest"}}'
+      source: '{{.package}}:{{.source_tag}}'
+      dest: '{{.repository}}/{{.package}}:{{.dest_tag}}'
     cmds:
-      - docker tag {{.source_tag}} {{.dest_tag}}
+      - docker tag {{.source}} {{.dest}}
   
-  push:
+  _push:
+    internal: true
     desc: Push docker image to registry
     cmds:
       - docker push {{.repository}}/{{.package}}:{{.version}}
+  push:
+    desc: Push docker images to registry
+    cmds:
+      - task: push:backend
+      - task: push:frontend
   push:backend:
     desc: Push backend docker images to registry
     cmds:
-      - task: push
+      - task: _push
         vars:
           package: 'demo-backend-server'
-      - task: push
+      - task: _push
         vars:
           package: 'demo-backend-migrate'
   push:frontend:
     desc: Push frontend docker image to registry
     cmds:
-      - task: push
+      - task: _push
         vars:
           package: 'demo-frontend'

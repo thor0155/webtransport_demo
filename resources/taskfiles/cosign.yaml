@@ -15,17 +15,17 @@ tasks:
     deps:
       - ensure
     vars:    
-      dest_tag: '{{.repository}}/{{.package}}@{{.digest}}'
+      dest: '{{.repository}}/{{.package}}:{{.version}}@{{.digest}}'
     cmds:
-      - cosign sign --key cosign.key {{.dest_tag}}
+      - cosign sign --key cosign.key {{.dest}}
   verify:
     desc: Verify docker image signature with cosign
     deps:
       - ensure
     vars:    
-      dest_tag: '{{.repository}}/{{.package}}@{{.digest}}'
+      dest: '{{.repository}}/{{.package}}:{{.version}}@{{.digest}}'
     cmds:
-      - cosign verify --key cosign.pub {{.dest_tag}}
+      - cosign verify --key cosign.pub {{.dest}}
   genkey:
     desc: Generate cosign key pair
     deps:
