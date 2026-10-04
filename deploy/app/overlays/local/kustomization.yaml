@@ -33,7 +33,9 @@ secretGenerator:
       - DB_MONGODB_USERNAME=my_app 
       - DB_MONGODB_PASSWORD=mypassword
       - DB_MYSQL_PASSWORD=mypassword
+      # - DB_MYSQL_USERNAME=root
       - DB_REDIS_PASSWORD=mypassword
+      # - DB_REDIS_USERNAME=root
       
 
 configMapGenerator:

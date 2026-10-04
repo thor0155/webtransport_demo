@@ -2,3 +2,5 @@ resources:
   - certificate.yaml
   - cluster-issuer-staging.yaml
   - cluster-issuer-production.yaml
+  - cluster-image-policy.yaml
+  - service-account.yaml

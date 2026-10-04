@@ -1,0 +1,34 @@
+version: "3"
+
+vars:
+  digest: '{{.digest | default "sha256:abc123"}}'
+
+tasks:
+  ensure:
+    desc: Install cosign CLI
+    status:
+      - which cosign
+    cmds:
+      - go install github.com/sigstore/cosign/v2/cmd/cosign@latest
+  sign:
+    desc: Sign docker image with cosign
+    deps:
+      - ensure
+    vars:    
+      dest_tag: '{{.repository}}/{{.package}}@{{.digest}}'
+    cmds:
+      - cosign sign --key cosign.key {{.dest_tag}}
+  verify:
+    desc: Verify docker image signature with cosign
+    deps:
+      - ensure
+    vars:    
+      dest_tag: '{{.repository}}/{{.package}}@{{.digest}}'
+    cmds:
+      - cosign verify --key cosign.pub {{.dest_tag}}
+  genkey:
+    desc: Generate cosign key pair
+    deps:
+      - ensure
+    cmds:
+      - cosign generate-key-pair

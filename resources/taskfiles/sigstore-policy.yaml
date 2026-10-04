@@ -1,0 +1,35 @@
+version: "3"
+
+tasks:
+  config:
+    desc: set sigstore policy config
+    cmds:
+      - kubectl patch configmap config-policy-controller -n cosign-system --type merge -p "{\"data\":{\"no-match-policy\":\"allow\"}}"
+  uninstall:
+    desc: Uninstall sigstore policy
+    cmds:
+      - helm uninstall policy-controller -n cosign-system
+  check:
+    desc: Check if sigstore policy is installed
+    cmds:
+      - helm status policy-controller -n cosign-system
+  check:crd:
+    desc: Check if sigstore policy CRD is installed
+    cmds:
+      - kubectl get crd clusterimagepolicies.policy.sigstore.dev
+  repo-add:
+    desc: Helm sigstore repo
+    status:
+      - helm repo list | grep -q '^sigstore[[:space:]]'
+    cmds:
+      - helm repo add sigstore https://sigstore.github.io/helm-charts
+      - helm repo update
+  install:
+    desc: Install sigstore policy
+    deps:
+      - repo-add
+    status:
+      - helm status policy-controller -n cosign-system
+    cmds:
+      - helm upgrade --install policy-controller sigstore/policy-controller --create-namespace -n cosign-system
+      - task: config

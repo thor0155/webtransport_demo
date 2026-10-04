@@ -33,7 +33,7 @@ spec:
 
     spec:
       terminationGracePeriodSeconds: 30
-
+      serviceAccountName: app
       containers:
         - name: web
 

@@ -7,6 +7,11 @@ resources:
   - ../../base
 
 patches:
+  - path: patch-cluster-image-policy.yaml
+    target:
+      kind: ClusterImagePolicy
+      name: demo-image-policy
+
   - path: patch-certificate.yaml
     target:
       kind: Certificate

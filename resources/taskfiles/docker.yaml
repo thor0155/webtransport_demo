@@ -55,6 +55,9 @@ tasks:
     dir: "{{.DOCKER_COMPOSE_DIR}}"
     cmds:
       - docker compose build backend_migrate
+      - task: tag
+        vars:
+          package: 'demo-backend-migrate'
     env:
       BACKEND_MIGRATE_ENV_NAME: '{{.APP_ENV}}'
       BACKEND_MIGRATE_BUILD_VERSION: '{{.BUILD_VERSION}}'
@@ -67,6 +70,9 @@ tasks:
     dir: "{{.DOCKER_COMPOSE_DIR}}"
     cmds:
       - docker compose build backend_server
+      - task: tag
+        vars:
+          package: 'demo-backend-server'
     env:
       BACKEND_SERVER_ENV_NAME: '{{.APP_ENV}}'
       BACKEND_SERVER_BUILD_VERSION: '{{.BUILD_VERSION}}'
@@ -79,3 +85,39 @@ tasks:
     dir: "{{.DOCKER_COMPOSE_DIR}}"
     cmds:
       - docker compose build frontend
+      - task: tag
+        vars:
+          package: 'demo-frontend'
+
+  digest:
+    desc: Show docker image digest
+    cmds:
+      - docker inspect --format='{{"{{"}}index .RepoDigests 0{{"}}"}}' {{.package}}:{{.version}} | cut -d@ -f2
+  
+  tag:
+    desc: Tag docker image
+    vars:
+      source_tag: '{{.package}}:{{.version}}'
+      dest_tag: '{{.repository}}/{{.package}}:{{.version}}'
+    cmds:
+      - docker tag {{.source_tag}} {{.dest_tag}}
+  
+  push:
+    desc: Push docker image to registry
+    cmds:
+      - docker push {{.repository}}/{{.package}}:{{.version}}
+  push:backend:
+    desc: Push backend docker images to registry
+    cmds:
+      - task: push
+        vars:
+          package: 'demo-backend-server'
+      - task: push
+        vars:
+          package: 'demo-backend-migrate'
+  push:frontend:
+    desc: Push frontend docker image to registry
+    cmds:
+      - task: push
+        vars:
+          package: 'demo-frontend'

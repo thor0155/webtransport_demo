@@ -4,6 +4,9 @@ dotenv:
   - .env
   
 vars:
+  version: '{{.version | default "latest"}}'
+  package: '{{.package | default "demo-backend-server"}}'
+  repository: '{{.repository | default "docker.io/thorlin"}}'
   migration_tag: '{{.migration_tag | default "latest"}}'
   env: '{{.env | default "local"}}'
   root: '{{.ROOT_DIR}}'
@@ -46,6 +49,10 @@ includes:
     taskfile: ./resources/taskfiles/cert-manager.yaml
   migration:
     taskfile: ./resources/taskfiles/migration.yaml
+  sigstore:
+    taskfile: ./resources/taskfiles/sigstore-policy.yaml
+  cosign:
+    taskfile: ./resources/taskfiles/cosign.yaml
 
 tasks:
   default:

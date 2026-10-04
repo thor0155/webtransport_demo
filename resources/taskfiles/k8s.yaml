@@ -96,7 +96,7 @@ tasks:
     status:
       - kubectl get ns {{.env}}
     cmds:
-      - kubectl create ns {{.env}} --dry-run=client -o yaml | kubectl apply -f -
+      - kubectl create ns {{.env}} --dry-run=client -o yaml | kubectl label --local -f - policy.sigstore.dev/include=true -o yaml | kubectl apply -f -
 
   delete:
     desc: Delete k8s manifests
@@ -193,3 +193,27 @@ tasks:
 
         echo "Timeout waiting for {{.kind}}/{{.name}} to be created."
         exit 1
+  
+  test:env:
+    desc: "Test if env_var is set"
+    vars:
+      env_var: '{{.env_var | default "DOCKERHUB_PAT"}}'
+    cmds:
+      - sh -c 'if [ -n "${{.env_var}}" ]; then echo "{{.env_var}} is set"; else echo "{{.env_var}} is NOT set"; fi'
+
+  secret:dockerhub:
+    desc: "Create dockerhub secret"
+    status:
+      - kubectl get secret dockerhub-secret -n {{.env}}
+    vars:
+      username: '{{.username | default "thorlin"}}'
+    preconditions:
+      - sh: test -n "$DOCKERHUB_PAT"
+        msg: "Environment variable DOCKERHUB_PAT is not set. Please set it before running this task."
+    cmds:
+      - | 
+        kubectl create secret docker-registry dockerhub-secret \
+          --docker-server=https://index.docker.io/v1/ \
+          --docker-username={{.username}} \
+          --docker-password="$DOCKERHUB_PAT" \
+          -n {{.env}}

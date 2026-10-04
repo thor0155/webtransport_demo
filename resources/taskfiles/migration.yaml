@@ -11,6 +11,9 @@ vars:
 tasks:
   prepare:
     desc: Prepare migration kustomization.yaml
+    vars:
+      migration_digest:
+        sh: task docker:digest package=demo-backend-migrate
     cmds:
       - |
         if [ ! -f "{{.target_config_yaml}}" ]; then
@@ -23,3 +26,4 @@ tasks:
         -dst {{.target_yaml}} 
         -namespace {{.env}}   
         -version {{.migration_tag}}
+        -digest {{.migration_digest}}

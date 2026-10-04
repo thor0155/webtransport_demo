@@ -1,0 +1,16 @@
+apiVersion: policy.sigstore.dev/v1beta1
+kind: ClusterImagePolicy
+metadata:
+  name: demo-image-policy
+spec:
+  images:
+    - glob: "index.docker.io/thorlin/**"
+    # - glob: "docker.io/thorlin/**"
+
+  authorities:
+    - key:
+        data: |
+          -----BEGIN PUBLIC KEY-----
+          MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEw+A6LATc5EvaYMd90gko6y+mYms+
+          3cU0Jt7RzIA5ZFDOGTIaG8+4orTqSDzw8LlSTDwr54ZLxxY0bRYt6M3xsQ==
+          -----END PUBLIC KEY-----

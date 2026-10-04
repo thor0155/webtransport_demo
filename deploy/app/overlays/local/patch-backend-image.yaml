@@ -7,6 +7,6 @@ spec:
     spec:
       containers:
         - name: api
-          image: demo-backend-server:latest
+          image: docker.io/thorlin/demo-backend-server@sha256:d3cb6b5369b69b583cedef17e402a2a699a36ae6c6f3c5847df1c4bc5c5699a5
           imagePullPolicy: Always
           # imagePullPolicy: IfNotPresent

@@ -22,9 +22,11 @@ spec:
 
     spec:
       restartPolicy: Never 
-
+      serviceAccountName: app
+      
       containers:
         - name: gorm
+          imagePullPolicy: Always
           image: demo-backend-migrate:latest
           args:
           - migrate
@@ -36,6 +38,7 @@ spec:
                 name: migration-secret
 
         - name: mongodb
+          imagePullPolicy: Always
           image: demo-backend-migrate:latest
           args:
             - migrate

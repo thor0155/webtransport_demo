@@ -1,0 +1,14 @@
+apiVersion: policy.sigstore.dev/v1beta1
+kind: ClusterImagePolicy
+metadata:
+  name: demo-image-policy
+spec:
+  images:
+    - glob: "registry.example.com/webtransport-chat/**"
+
+  authorities:
+    - key:
+        data: |
+          -----BEGIN PUBLIC KEY-----
+          ...
+          -----END PUBLIC KEY-----

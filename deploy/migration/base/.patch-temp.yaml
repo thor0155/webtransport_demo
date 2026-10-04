@@ -11,4 +11,6 @@ nameSuffix: -{{.MIGRATION_NAME_VERSION}}
 
 images:
   - name: demo-backend-migrate
+    newName: docker.io/thorlin/demo-backend-migrate
     newTag: {{.MIGRATION_VERSION}}
+    digest: {{.MIGRATION_DIGEST}}

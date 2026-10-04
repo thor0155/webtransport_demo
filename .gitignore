@@ -5,3 +5,5 @@ traefik/values-default.yaml
 bin/
 .env
 .overlays/
+cosign.key
+cosign.pub

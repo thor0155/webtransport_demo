@@ -13,6 +13,7 @@ type TemplateData struct {
 	NAMESPACE              string
 	MIGRATION_VERSION      string
 	MIGRATION_NAME_VERSION string
+	MIGRATION_DIGEST       string
 }
 
 func main() {
@@ -21,7 +22,7 @@ func main() {
 
 	namespace := flag.String("namespace", "local", "Kubernetes namespace")
 	version := flag.String("version", "", "Migration version")
-
+	digest := flag.String("digest", "", "Migration digest")
 	flag.Parse()
 
 	if *src == "" {
@@ -43,6 +44,7 @@ func main() {
 		NAMESPACE:              *namespace,
 		MIGRATION_VERSION:      *version,
 		MIGRATION_NAME_VERSION: sanitizeKubernetesName(*version),
+		MIGRATION_DIGEST:       *digest,
 	}
 
 	if err := render(*src, *dst, data); err != nil {
