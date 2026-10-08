@@ -7,6 +7,6 @@ spec:
     spec:
       containers:
         - name: web
-          image: docker.io/thorlin/demo-frontend@sha256:491b93760c3a5a912e52ed20b1595bb30228c2ecd610b2d0b3eaaa77d2a836b3
+          image: docker.io/thorlin/demo-frontend:latest
           imagePullPolicy: Always
           # imagePullPolicy: IfNotPresent
