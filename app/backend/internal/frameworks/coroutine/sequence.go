@@ -33,6 +33,8 @@ type SequenceCoroutine[T any] struct {
 	isRunning       atomic.Bool
 	bundleCoroutine *ants.PoolWithFuncGeneric[*bundleProcArg[T]]
 	taskCoroutine   *ants.PoolWithFuncGeneric[*taskProcArg[T]]
+
+	options
 }
 
 type bundleProcArg[T any] struct {
@@ -45,12 +47,18 @@ type taskProcArg[T any] struct {
 	task T
 }
 
-func NewSequenceCoroutine[T any](handler HandlerFunc[T]) (*SequenceCoroutine[T], error) {
+func NewSequenceCoroutine[T any](handler HandlerFunc[T], opts ...Optional) (*SequenceCoroutine[T], error) {
 	var err error
 	r := &SequenceCoroutine[T]{
 		handler: handler,
 		grouped: make(map[int][]T),
 		errCh:   make(chan error, 1),
+		options: options{
+			sortDirection: SortDirectionAsc,
+		},
+	}
+	for _, opt := range opts {
+		opt(&r.options)
 	}
 	if r.bundleCoroutine, err = ants.NewPoolWithFuncGeneric(1, r.processBundle, ants.WithPreAlloc(true)); err != nil {
 		return nil, err
@@ -115,7 +123,14 @@ func (s *SequenceCoroutine[T]) yieldBundleHandler(yield func([]T)) error {
 	s.mu.RUnlock()
 
 	phases := slices.Collect(maps.Keys(grouped))
-	sort.Sort(sort.Reverse(sort.IntSlice(phases)))
+	switch s.sortDirection {
+	case SortDirectionAsc:
+		sort.Ints(phases)
+	case SortDirectionDesc:
+		sort.Sort(sort.Reverse(sort.IntSlice(phases)))
+	default:
+		return errors.Errorf("invalid sort direction: %s", s.sortDirection)
+	}
 	for _, phase := range phases {
 		yield(grouped[phase])
 	}

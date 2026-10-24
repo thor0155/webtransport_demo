@@ -1,11 +1,12 @@
 package obj
 
 import (
-	"api/internal/frameworks/coroutine"
 	"context"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"api/internal/frameworks/coroutine"
 
 	"github.com/cockroachdb/errors"
 	"go.uber.org/zap"
@@ -51,7 +52,7 @@ func NewLifecycle(logger *zap.Logger, manager *Manager, opts ...LifecycleOption)
 	if l.componentCoroutine, err = coroutine.NewSequenceCoroutine(func(c Component) error {
 		l.logger.Info("initialize component", zap.String("name", c.Name()))
 		return c.Init()
-	}); err != nil {
+	}, coroutine.SetSortDirection(coroutine.SortDirectionDesc)); err != nil {
 		return nil, err
 	}
 	if l.closeableCoroutine, err = coroutine.NewSequenceCoroutine(func(c Closeable) error {
